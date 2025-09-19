@@ -1,19 +1,20 @@
+import { ConfirmDialog } from "@/components/confirm-dialog";
+import { ThemedSafeAreaView } from "@/components/safe-area-view";
+import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Keyboard,
-  TextInput,
-  TouchableOpacity,
+  Alert,
   FlatList,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
-  Alert,
+  TextInput,
+  TouchableOpacity,
 } from "react-native";
-import { ThemedSafeAreaView } from '@/components/safe-area-view';
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { ThemedView } from '@/components/themed-view';
-import { ThemedText } from '@/components/themed-text';
-import { IconSymbol } from '@/components/ui/icon-symbol';
 
 const STORAGE_KEY = "MEALS_BY_DATE_V1";
 
@@ -40,9 +41,10 @@ export default function CaloriesScreen() {
   const [mealCalories, setMealCalories] = useState("");
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editName, setEditName] = useState('');
-  const [editCalories, setEditCalories] = useState('');
+  const [editName, setEditName] = useState("");
+  const [editCalories, setEditCalories] = useState("");
 
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const dateKey = formatDateKey(currentDate);
   const todaysMeals = mealsByDate[dateKey] || [];
 
@@ -105,31 +107,30 @@ export default function CaloriesScreen() {
     };
     await persist(next);
   };
-  
+
   const confirmDeleteMeal = (id: string) => {
-    Alert.alert('Delete meal', 'Are you sure you want to delete this meal?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: () => onDeleteMeal(id) },
-    ]);
+    setPendingDeleteId(id);
   };
-  
+
   const startEdit = (m: Meal) => {
     setEditingId(m.id);
     setEditName(m.name);
     setEditCalories(String(m.calories));
   };
-  
+
   const saveEdit = async () => {
     if (!editingId) return;
     const n = editName.trim();
     const c = Number(editCalories);
     if (!n || !Number.isFinite(c) || c <= 0) {
-      Alert.alert('Invalid input', 'Enter a valid name and positive calories.');
+      Alert.alert("Invalid input", "Enter a valid name and positive calories.");
       return;
     }
     const next: MealsByDate = {
       ...mealsByDate,
-      [dateKey]: todaysMeals.map((m) => (m.id === editingId ? { ...m, name: n, calories: c } : m)),
+      [dateKey]: todaysMeals.map((m) =>
+        m.id === editingId ? { ...m, name: n, calories: c } : m
+      ),
     };
     await persist(next);
     setEditingId(null);
@@ -158,7 +159,15 @@ export default function CaloriesScreen() {
               placeholderTextColor="#6B7280"
             />
           </ThemedView>
-          <ThemedView style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }} darkColor="#333333">
+          <ThemedView
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              marginLeft: 8,
+            }}
+            darkColor="#333333"
+          >
             <TouchableOpacity
               style={styles.iconBtnConfirm}
               onPress={saveEdit}
@@ -172,9 +181,19 @@ export default function CaloriesScreen() {
         <>
           <ThemedView style={{ flex: 1 }} darkColor="#333333">
             <ThemedText style={styles.mealName}>{item.name}</ThemedText>
-            <ThemedText style={styles.mealCalories}>{item.calories} kcal</ThemedText>
+            <ThemedText style={styles.mealCalories}>
+              {item.calories} kcal
+            </ThemedText>
           </ThemedView>
-          <ThemedView style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }} darkColor="#333333">
+          <ThemedView
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              gap: 8,
+              marginLeft: 8,
+            }}
+            darkColor="#333333"
+          >
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => startEdit(item)}
@@ -200,7 +219,7 @@ export default function CaloriesScreen() {
   const canAdd = mealName.trim().length > 0 && Number(mealCalories) > 0;
 
   return (
-    <ThemedSafeAreaView style={{flex: 1}}>
+    <ThemedSafeAreaView style={{ flex: 1 }}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
@@ -210,25 +229,33 @@ export default function CaloriesScreen() {
             style={styles.navBtn}
             onPress={() => setCurrentDate((d) => addDays(d, -1))}
           >
-            <ThemedText style={styles.navBtnText} darkColor="#333333">{"‹"}</ThemedText>
+            <ThemedText style={styles.navBtnText} darkColor="#333333">
+              {"‹"}
+            </ThemedText>
           </TouchableOpacity>
           <ThemedView style={styles.dateBox}>
             <ThemedText style={styles.dateText}>{dateKey}</ThemedText>
             <TouchableOpacity onPress={goToday}>
-              <ThemedText style={styles.todayText} darkColor="#A1CEDC">Today</ThemedText>
+              <ThemedText style={styles.todayText} darkColor="#A1CEDC">
+                Today
+              </ThemedText>
             </TouchableOpacity>
           </ThemedView>
           <TouchableOpacity
             style={styles.navBtn}
             onPress={() => setCurrentDate((d) => addDays(d, 1))}
           >
-            <ThemedText style={styles.navBtnText} darkColor="#333333">{"›"}</ThemedText>
+            <ThemedText style={styles.navBtnText} darkColor="#333333">
+              {"›"}
+            </ThemedText>
           </TouchableOpacity>
         </ThemedView>
 
         <ThemedView style={styles.totalBox} darkColor="#333333">
           <ThemedText style={styles.totalLabel}>Total</ThemedText>
-          <ThemedText style={styles.totalValue}>{totalCalories} kcal</ThemedText>
+          <ThemedText style={styles.totalValue}>
+            {totalCalories} kcal
+          </ThemedText>
         </ThemedView>
 
         <ThemedView style={styles.inputCard}>
@@ -271,6 +298,19 @@ export default function CaloriesScreen() {
             </ThemedText>
           }
           style={{ flex: 1 }}
+        />
+        <ConfirmDialog
+          visible={pendingDeleteId !== null}
+          title="Delete meal"
+          message="Are you sure you want to delete this meal?"
+          confirmText="Delete"
+          cancelText="Cancel"
+          onCancel={() => setPendingDeleteId(null)}
+          onConfirm={async () => {
+            if (!pendingDeleteId) return;
+            await onDeleteMeal(pendingDeleteId);
+            setPendingDeleteId(null);
+          }}
         />
       </KeyboardAvoidingView>
     </ThemedSafeAreaView>
