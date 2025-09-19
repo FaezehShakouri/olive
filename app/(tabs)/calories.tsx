@@ -9,7 +9,6 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
-import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { ThemedSafeAreaView } from '@/components/safe-area-view';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from '@/components/themed-view';
