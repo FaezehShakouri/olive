@@ -7,6 +7,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
+  Animated,
+  Easing,
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
@@ -57,6 +59,9 @@ export default function CaloriesScreen() {
     [todaysMeals]
   );
 
+  const [displayTotal, setDisplayTotal] = useState(0);
+  const totalAnim = React.useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     (async () => {
       try {
@@ -67,6 +72,32 @@ export default function CaloriesScreen() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const target = todaysMeals.reduce(
+      (s, m) => s + (Number.isFinite(+m.calories) ? +m.calories : 0),
+      0
+    );
+
+    totalAnim.stopAnimation();
+    totalAnim.setValue(0);
+
+    const id = totalAnim.addListener(({ value }) => {
+      setDisplayTotal(Math.round(value));
+    });
+
+    Animated.timing(totalAnim, {
+      toValue: target,
+      duration: Math.min(1200, Math.max(350, target * 2)), // quick but smooth
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => {
+      totalAnim.removeListener(id);
+      setDisplayTotal(target);
+    });
+
+    return () => totalAnim.removeListener(id);
+  }, [dateKey, todaysMeals, totalAnim]);
 
   const persist = async (next: MealsByDate) => {
     try {
@@ -253,9 +284,7 @@ export default function CaloriesScreen() {
 
         <ThemedView style={styles.totalBox} darkColor="#333333">
           <ThemedText style={styles.totalLabel}>Total</ThemedText>
-          <ThemedText style={styles.totalValue}>
-            {totalCalories} kcal
-          </ThemedText>
+          <ThemedText style={styles.totalValue}>{displayTotal} kcal</ThemedText>
         </ThemedView>
 
         <ThemedView style={styles.inputCard}>
