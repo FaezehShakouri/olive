@@ -14,6 +14,7 @@ import { ThemedSafeAreaView } from '@/components/safe-area-view';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
+import { IconSymbol } from '@/components/ui/icon-symbol';
 
 const STORAGE_KEY = "MEALS_BY_DATE_V1";
 
@@ -101,6 +102,13 @@ export default function CaloriesScreen() {
     await persist(next);
   };
 
+  const confirmDeleteMeal = (id: string) => {
+    Alert.alert('Delete meal', 'Are you sure you want to delete this meal?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => onDeleteMeal(id) },
+    ]);
+  };
+
   const goToday = () => setCurrentDate(new Date());
 
   const renderItem = ({ item }: { item: Meal }) => (
@@ -111,9 +119,12 @@ export default function CaloriesScreen() {
       </ThemedView>
       <TouchableOpacity
         style={styles.deleteBtn}
-        onPress={() => onDeleteMeal(item.id)}
+        onPress={() => confirmDeleteMeal(item.id)}
+        activeOpacity={0.7}
+        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        accessibilityLabel="Delete meal"
       >
-        <ThemedText style={styles.deleteBtnText}>Delete</ThemedText>
+        <IconSymbol name="xmark" size={18} color="#EF4444" />
       </TouchableOpacity>
     </ThemedView>
   );
@@ -283,12 +294,13 @@ const styles = StyleSheet.create({
   mealName: { fontSize: 16, fontWeight: "700" },
   mealCalories: { marginTop: 2 },
   deleteBtn: {
-    backgroundColor: "#EF4444",
-    paddingHorizontal: 12,
+    paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 9999,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  deleteBtnText: { color: "white", fontWeight: "700" },
+  deleteBtnText: { color: "#EF4444", fontWeight: "700" },
 
   emptyText: { textAlign: "center" },
 });
