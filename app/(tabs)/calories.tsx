@@ -39,6 +39,10 @@ export default function CaloriesScreen() {
   const [mealsByDate, setMealsByDate] = useState<MealsByDate>({});
   const [mealName, setMealName] = useState("");
   const [mealCalories, setMealCalories] = useState("");
+  // Editing state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editCalories, setEditCalories] = useState('');
 
   const dateKey = formatDateKey(currentDate);
   const todaysMeals = mealsByDate[dateKey] || [];
@@ -101,31 +105,95 @@ export default function CaloriesScreen() {
     };
     await persist(next);
   };
-
+  
   const confirmDeleteMeal = (id: string) => {
     Alert.alert('Delete meal', 'Are you sure you want to delete this meal?', [
       { text: 'Cancel', style: 'cancel' },
       { text: 'Delete', style: 'destructive', onPress: () => onDeleteMeal(id) },
     ]);
   };
+  
+  const startEdit = (m: Meal) => {
+    setEditingId(m.id);
+    setEditName(m.name);
+    setEditCalories(String(m.calories));
+  };
+  
+  const saveEdit = async () => {
+    if (!editingId) return;
+    const n = editName.trim();
+    const c = Number(editCalories);
+    if (!n || !Number.isFinite(c) || c <= 0) {
+      Alert.alert('Invalid input', 'Enter a valid name and positive calories.');
+      return;
+    }
+    const next: MealsByDate = {
+      ...mealsByDate,
+      [dateKey]: todaysMeals.map((m) => (m.id === editingId ? { ...m, name: n, calories: c } : m)),
+    };
+    await persist(next);
+    setEditingId(null);
+  };
 
   const goToday = () => setCurrentDate(new Date());
 
   const renderItem = ({ item }: { item: Meal }) => (
-    <ThemedView style={styles.mealRow} darkColor="#333333">
-      <ThemedView style={{ flex: 1 }} darkColor="#333333">
-        <ThemedText style={styles.mealName}>{item.name}</ThemedText>
-        <ThemedText style={styles.mealCalories}>{item.calories} kcal</ThemedText>
-      </ThemedView>
-      <TouchableOpacity
-        style={styles.deleteBtn}
-        onPress={() => confirmDeleteMeal(item.id)}
-        activeOpacity={0.7}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-        accessibilityLabel="Delete meal"
-      >
-        <IconSymbol name="xmark" size={18} color="#EF4444" />
-      </TouchableOpacity>
+    <ThemedView style={styles.mealRow}>
+      {editingId === item.id ? (
+        <>
+          <View style={{ flex: 1, gap: 6 }}>
+            <TextInput
+              value={editName}
+              onChangeText={setEditName}
+              placeholder="Meal name"
+              style={styles.input}
+              placeholderTextColor="#6B7280"
+            />
+            <TextInput
+              value={editCalories}
+              onChangeText={setEditCalories}
+              placeholder="Calories"
+              keyboardType="numeric"
+              style={styles.input}
+              placeholderTextColor="#6B7280"
+            />
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+            <TouchableOpacity
+              style={styles.iconBtnConfirm}
+              onPress={saveEdit}
+              accessibilityLabel="Save"
+            >
+              <IconSymbol name="checkmark" size={18} color="#2563EB" />
+            </TouchableOpacity>
+          </View>
+        </>
+      ) : (
+        <>
+          <View style={{ flex: 1 }}>
+            <ThemedText style={styles.mealName}>{item.name}</ThemedText>
+            <ThemedText style={styles.mealCalories}>{item.calories} kcal</ThemedText>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+            <TouchableOpacity
+              style={styles.iconBtn}
+              onPress={() => startEdit(item)}
+              accessibilityLabel="Edit meal"
+            >
+              <IconSymbol name="pencil" size={18} color="#2563EB" />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.iconBtnDanger}
+              onPress={() => confirmDeleteMeal(item.id)}
+              accessibilityLabel="Delete meal"
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              activeOpacity={0.7}
+            >
+              <IconSymbol name="xmark" size={18} color="#EF4444" />
+            </TouchableOpacity>
+          </View>
+        </>
+      )}
     </ThemedView>
   );
 
@@ -270,6 +338,29 @@ const styles = StyleSheet.create({
     borderColor: "#D1D5DB",
     color: "#111827",
   },
+  iconBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconBtnDanger: {
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconBtnConfirm: {
+    backgroundColor: "#333333",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 9999,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconBtnConfirmText: { color: "white", fontWeight: "700" },
   addBtn: {
     backgroundColor: "#22C55E",
     borderRadius: 8,
