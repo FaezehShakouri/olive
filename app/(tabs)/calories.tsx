@@ -138,10 +138,10 @@ export default function CaloriesScreen() {
   const goToday = () => setCurrentDate(new Date());
 
   const renderItem = ({ item }: { item: Meal }) => (
-    <ThemedView style={styles.mealRow}>
+    <ThemedView style={styles.mealRow} darkColor="#333333">
       {editingId === item.id ? (
         <>
-          <View style={{ flex: 1, gap: 6 }}>
+          <ThemedView style={{ flex: 1, gap: 6 }} darkColor="#333333">
             <TextInput
               value={editName}
               onChangeText={setEditName}
@@ -157,8 +157,8 @@ export default function CaloriesScreen() {
               style={styles.input}
               placeholderTextColor="#6B7280"
             />
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+          </ThemedView>
+          <ThemedView style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }} darkColor="#333333">
             <TouchableOpacity
               style={styles.iconBtnConfirm}
               onPress={saveEdit}
@@ -166,15 +166,15 @@ export default function CaloriesScreen() {
             >
               <IconSymbol name="checkmark" size={18} color="#2563EB" />
             </TouchableOpacity>
-          </View>
+          </ThemedView>
         </>
       ) : (
         <>
-          <View style={{ flex: 1 }}>
+          <ThemedView style={{ flex: 1 }} darkColor="#333333">
             <ThemedText style={styles.mealName}>{item.name}</ThemedText>
             <ThemedText style={styles.mealCalories}>{item.calories} kcal</ThemedText>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+          </ThemedView>
+          <ThemedView style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginLeft: 8 }} darkColor="#333333">
             <TouchableOpacity
               style={styles.iconBtn}
               onPress={() => startEdit(item)}
@@ -191,7 +191,7 @@ export default function CaloriesScreen() {
             >
               <IconSymbol name="xmark" size={18} color="#EF4444" />
             </TouchableOpacity>
-          </View>
+          </ThemedView>
         </>
       )}
     </ThemedView>
@@ -353,7 +353,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   iconBtnConfirm: {
-    backgroundColor: "#333333",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 9999,
