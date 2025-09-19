@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   FlatList,
@@ -10,7 +9,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 type Meal = { id: string; name: string; calories: number };
 type MealsByDate = Record<string, Meal[]>;
 
@@ -120,14 +119,14 @@ export default function DaysScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaProvider style={styles.container}>
       <FlatList
         data={dateKeys}
         keyExtractor={(k) => k}
         renderItem={renderItem}
         contentContainerStyle={{ paddingVertical: 12 }}
       />
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 

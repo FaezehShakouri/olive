@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   TextInput,
@@ -12,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const STORAGE_KEY = "MEALS_BY_DATE_V1";
 
@@ -119,7 +119,7 @@ export default function CaloriesScreen() {
   const canAdd = mealName.trim().length > 0 && Number(mealCalories) > 0;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaProvider style={styles.container}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
@@ -190,7 +190,7 @@ export default function CaloriesScreen() {
           style={{ flex: 1 }}
         />
       </KeyboardAvoidingView>
-    </SafeAreaView>
+    </SafeAreaProvider>
   );
 }
 
