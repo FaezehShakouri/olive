@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  View,
-  Text,
+  Keyboard,
   TextInput,
   TouchableOpacity,
   FlatList,
@@ -10,6 +9,7 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
+import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { ThemedSafeAreaView } from '@/components/safe-area-view';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ThemedView } from '@/components/themed-view';
@@ -78,6 +78,7 @@ export default function CaloriesScreen() {
   };
 
   const onAddMeal = async () => {
+    Keyboard.dismiss();
     const name = mealName.trim();
     const calories = parseFloat(mealCalories);
     if (!name) {
@@ -202,7 +203,7 @@ export default function CaloriesScreen() {
   return (
     <ThemedSafeAreaView style={{flex: 1}}>
       <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={{ flex: 1 }}
       >
         <ThemedView style={styles.header}>
