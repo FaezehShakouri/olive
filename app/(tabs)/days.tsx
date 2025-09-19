@@ -1,15 +1,14 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  View,
-  Text,
   FlatList,
   StyleSheet,
-  TouchableOpacity,
   AppState,
 } from "react-native";
+import { ThemedSafeAreaView } from '@/components/safe-area-view';
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemedView } from "@/components/themed-view";
+import { ThemedText } from "@/components/themed-text";
 type Meal = { id: string; name: string; calories: number };
 type MealsByDate = Record<string, Meal[]>;
 
@@ -94,46 +93,45 @@ export default function DaysScreen() {
   }, [dateKeys, mealsByDate]);
 
   const renderMeal = (m: Meal) => (
-    <View key={m.id} style={styles.mealRow}>
-      <Text style={styles.mealName}>{m.name}</Text>
-      <Text style={styles.mealCalories}>{m.calories} kcal</Text>
-    </View>
+    <ThemedView key={m.id} style={styles.mealRow} darkColor="#333333">
+      <ThemedText style={styles.mealName}>{m.name}</ThemedText>
+      <ThemedText style={styles.mealCalories}>{m.calories} kcal</ThemedText>
+    </ThemedView>
   );
 
   const renderItem = ({ item: dateKey }: { item: string }) => {
     const meals = mealsByDate[dateKey] || [];
     const total = totals[dateKey] ?? 0;
     return (
-      <View style={styles.card}>
-        <View style={styles.cardHeader}>
-          <Text style={styles.cardDate}>{dateKey}</Text>
-          <Text style={styles.cardTotal}>{total} kcal</Text>
-        </View>
+      <ThemedView style={styles.card} darkColor="#333333">
+        <ThemedView style={styles.cardHeader} darkColor="#333333">
+          <ThemedText style={styles.cardDate}>{dateKey}</ThemedText>
+          <ThemedText style={styles.cardTotal}>{total} kcal</ThemedText>
+        </ThemedView>
         {meals.length === 0 ? (
-          <Text style={styles.emptyMeals}>No meals logged.</Text>
+          <ThemedText style={styles.emptyMeals}>No meals logged.</ThemedText>
         ) : (
-          <View style={styles.mealsList}>{meals.map(renderMeal)}</View>
+          <ThemedView style={styles.mealsList} darkColor="#333333">{meals.map(renderMeal)}</ThemedView>
         )}
-      </View>
+      </ThemedView>
     );
   };
 
   return (
-    <SafeAreaProvider style={styles.container}>
+    <ThemedSafeAreaView style={{flex: 1}}>
       <FlatList
         data={dateKeys}
         keyExtractor={(k) => k}
         renderItem={renderItem}
         contentContainerStyle={{ paddingVertical: 12 }}
       />
-    </SafeAreaProvider>
+    </ThemedSafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F7F7F7" },
+  container: { flex: 1 },
   card: {
-    backgroundColor: "#FFFFFF",
     marginHorizontal: 16,
     marginVertical: 8,
     borderRadius: 12,
@@ -151,18 +149,17 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   cardDate: { fontSize: 18, fontWeight: "700" },
-  cardTotal: { fontSize: 16, fontWeight: "700", color: "#334155" },
+  cardTotal: { fontSize: 16, fontWeight: "700" },
   mealsList: { gap: 8 },
   mealRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: "#F8FAFC",
     borderRadius: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  mealName: { fontSize: 16, fontWeight: "600", color: "#111827" },
-  mealCalories: { fontSize: 14, color: "#64748B" },
-  emptyMeals: { color: "#64748B" },
+  mealName: { fontSize: 16, fontWeight: "600" },
+  mealCalories: { fontSize: 14 },
+  emptyMeals: {},
 });

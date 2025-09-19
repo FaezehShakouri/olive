@@ -10,8 +10,10 @@ import {
   StyleSheet,
   Alert,
 } from "react-native";
+import { ThemedSafeAreaView } from '@/components/safe-area-view';
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { ThemedView } from '@/components/themed-view';
+import { ThemedText } from '@/components/themed-text';
 
 const STORAGE_KEY = "MEALS_BY_DATE_V1";
 
@@ -102,61 +104,62 @@ export default function CaloriesScreen() {
   const goToday = () => setCurrentDate(new Date());
 
   const renderItem = ({ item }: { item: Meal }) => (
-    <View style={styles.mealRow}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.mealName}>{item.name}</Text>
-        <Text style={styles.mealCalories}>{item.calories} kcal</Text>
-      </View>
+    <ThemedView style={styles.mealRow} darkColor="#333333">
+      <ThemedView style={{ flex: 1 }} darkColor="#333333">
+        <ThemedText style={styles.mealName}>{item.name}</ThemedText>
+        <ThemedText style={styles.mealCalories}>{item.calories} kcal</ThemedText>
+      </ThemedView>
       <TouchableOpacity
         style={styles.deleteBtn}
         onPress={() => onDeleteMeal(item.id)}
       >
-        <Text style={styles.deleteBtnText}>Delete</Text>
+        <ThemedText style={styles.deleteBtnText}>Delete</ThemedText>
       </TouchableOpacity>
-    </View>
+    </ThemedView>
   );
 
   const canAdd = mealName.trim().length > 0 && Number(mealCalories) > 0;
 
   return (
-    <SafeAreaProvider style={styles.container}>
+    <ThemedSafeAreaView style={{flex: 1}}>
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={{ flex: 1 }}
       >
-        <View style={styles.header}>
+        <ThemedView style={styles.header}>
           <TouchableOpacity
             style={styles.navBtn}
             onPress={() => setCurrentDate((d) => addDays(d, -1))}
           >
-            <Text style={styles.navBtnText}>{"‹"}</Text>
+            <ThemedText style={styles.navBtnText} darkColor="#333333">{"‹"}</ThemedText>
           </TouchableOpacity>
-          <View style={styles.dateBox}>
-            <Text style={styles.dateText}>{dateKey}</Text>
+          <ThemedView style={styles.dateBox}>
+            <ThemedText style={styles.dateText}>{dateKey}</ThemedText>
             <TouchableOpacity onPress={goToday}>
-              <Text style={styles.todayText}>Today</Text>
+              <ThemedText style={styles.todayText} darkColor="#A1CEDC">Today</ThemedText>
             </TouchableOpacity>
-          </View>
+          </ThemedView>
           <TouchableOpacity
             style={styles.navBtn}
             onPress={() => setCurrentDate((d) => addDays(d, 1))}
           >
-            <Text style={styles.navBtnText}>{"›"}</Text>
+            <ThemedText style={styles.navBtnText} darkColor="#333333">{"›"}</ThemedText>
           </TouchableOpacity>
-        </View>
+        </ThemedView>
 
-        <View style={styles.totalBox}>
-          <Text style={styles.totalLabel}>Total</Text>
-          <Text style={styles.totalValue}>{totalCalories} kcal</Text>
-        </View>
+        <ThemedView style={styles.totalBox} darkColor="#333333">
+          <ThemedText style={styles.totalLabel}>Total</ThemedText>
+          <ThemedText style={styles.totalValue}>{totalCalories} kcal</ThemedText>
+        </ThemedView>
 
-        <View style={styles.inputCard}>
+        <ThemedView style={styles.inputCard}>
           <TextInput
             placeholder="Meal name (e.g., Chicken salad)"
             value={mealName}
             onChangeText={setMealName}
             style={styles.input}
             returnKeyType="next"
+            placeholderTextColor="#6B7280"
           />
           <TextInput
             placeholder="Calories (e.g., 450)"
@@ -165,15 +168,16 @@ export default function CaloriesScreen() {
             keyboardType="numeric"
             style={styles.input}
             returnKeyType="done"
+            placeholderTextColor="#6B7280"
           />
           <TouchableOpacity
             style={[styles.addBtn, !canAdd && { opacity: 0.5 }]}
             onPress={onAddMeal}
             disabled={!canAdd}
           >
-            <Text style={styles.addBtnText}>Add Meal</Text>
+            <ThemedText style={styles.addBtnText}>Add Meal</ThemedText>
           </TouchableOpacity>
-        </View>
+        </ThemedView>
 
         <FlatList
           data={todaysMeals}
@@ -183,19 +187,19 @@ export default function CaloriesScreen() {
             todaysMeals.length === 0 && { flex: 1, justifyContent: "center" }
           }
           ListEmptyComponent={
-            <Text style={styles.emptyText}>
+            <ThemedText style={styles.emptyText}>
               No meals yet. Add your first meal for {dateKey}.
-            </Text>
+            </ThemedText>
           }
           style={{ flex: 1 }}
         />
       </KeyboardAvoidingView>
-    </SafeAreaProvider>
+    </ThemedSafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#F7F7F7" },
+  container: { flex: 1 },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -214,13 +218,12 @@ const styles = StyleSheet.create({
   navBtnText: { fontSize: 24, fontWeight: "600" },
   dateBox: { flex: 1, alignItems: "center" },
   dateText: { fontSize: 18, fontWeight: "700" },
-  todayText: { marginTop: 2, color: "#3B82F6", fontWeight: "600" },
+  todayText: { marginTop: 2, fontWeight: "600" },
 
   totalBox: {
     marginHorizontal: 16,
     marginVertical: 8,
     padding: 16,
-    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     flexDirection: "row",
     justifyContent: "space-between",
@@ -231,14 +234,13 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
-  totalLabel: { fontSize: 16, color: "#555" },
+  totalLabel: { fontSize: 16 },
   totalValue: { fontSize: 24, fontWeight: "800" },
 
   inputCard: {
     marginHorizontal: 16,
     marginBottom: 8,
     padding: 12,
-    backgroundColor: "#FFFFFF",
     borderRadius: 12,
     gap: 8,
     shadowColor: "#000",
@@ -248,11 +250,14 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   input: {
-    backgroundColor: "#F2F2F2",
+    backgroundColor: "#FFFFFF",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 12,
     fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    color: "#111827",
   },
   addBtn: {
     backgroundColor: "#22C55E",
@@ -260,12 +265,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
   },
-  addBtnText: { color: "white", fontWeight: "700", fontSize: 16 },
+  addBtnText: { fontWeight: "700", fontSize: 16 },
 
   mealRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#FFFFFF",
     marginHorizontal: 16,
     marginVertical: 6,
     borderRadius: 12,
@@ -277,7 +281,7 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   mealName: { fontSize: 16, fontWeight: "700" },
-  mealCalories: { color: "#666", marginTop: 2 },
+  mealCalories: { marginTop: 2 },
   deleteBtn: {
     backgroundColor: "#EF4444",
     paddingHorizontal: 12,
@@ -286,5 +290,5 @@ const styles = StyleSheet.create({
   },
   deleteBtnText: { color: "white", fontWeight: "700" },
 
-  emptyText: { textAlign: "center", color: "#777" },
+  emptyText: { textAlign: "center" },
 });
