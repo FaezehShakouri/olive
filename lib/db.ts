@@ -16,8 +16,8 @@ async function migrate() {
 	const [{ user_version }] = await db.getAllAsync<{ user_version: number }>("PRAGMA user_version;");
 	let v = user_version ?? 0;
 
-	await db.withTransactionAsync(async () => {
-		if (v < 1) {
+	if (v < 1) {
+		await db.withTransactionAsync(async () => {
 			await db.execAsync(`
         CREATE TABLE IF NOT EXISTS meals (
           id TEXT PRIMARY KEY NOT NULL,
@@ -29,8 +29,8 @@ async function migrate() {
       `);
 			await db.execAsync("PRAGMA user_version = 1;");
 			v = 1;
-		}
-	});
+		});
+	}
 }
 
 export async function ensureDb() {
@@ -85,4 +85,63 @@ export async function getTotalsByDate(): Promise<Record<string, number>> {
 	const map: Record<string, number> = {};
 	for (const r of rows) map[r.date] = Number(r.total ?? 0);
 	return map;
+}
+
+// admin/bulk helpers
+
+function isISODate(s: string) {
+	return /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
+export async function clearAllMeals() {
+	const db = await ensureDb();
+	await db.execAsync("DELETE FROM meals");
+}
+
+export type ImportResult = { added: number; updated: number; skipped: number };
+
+export async function bulkUpsertMeals(input: unknown): Promise<ImportResult> {
+	// Accepts:
+	// - Array<{ id?, date, name, calories }>
+	// - Record<date, Array<{ id?, name, calories }>>
+	const db = await ensureDb();
+
+	type InItem = Partial<Meal> & { date: string; name: string; calories: number };
+
+	let items: InItem[] = [];
+	if (Array.isArray(input)) {
+		items = input as InItem[];
+	} else if (input && typeof input === "object") {
+		for (const [date, arr] of Object.entries(input as Record<string, any[]>)) {
+			if (!Array.isArray(arr)) continue;
+			for (const it of arr) items.push({ ...it, date });
+		}
+	}
+
+	if (items.length === 0) return { added: 0, updated: 0, skipped: 0 };
+
+	let added = 0, updated = 0, skipped = 0;
+	const now = Date.now();
+
+	await db.withTransactionAsync(async () => {
+		for (const it of items) {
+			const date = String(it.date ?? "").trim();
+			const name = String(it.name ?? "").trim();
+			const calories = Number(it.calories);
+			if (!isISODate(date) || !name || !Number.isFinite(calories) || calories <= 0) {
+				skipped++;
+				continue;
+			}
+			const id = (it.id ? String(it.id) : String(now + Math.random())).replace(/\s+/g, "");
+			// Use UPSERT; treat replaced rows as updates.
+			await db.runAsync(
+				"INSERT INTO meals (id, date, name, calories, created_at) VALUES (?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET date=excluded.date, name=excluded.name, calories=excluded.calories",
+				[id, date, name, calories, now]
+			);
+			// Heuristic: if client supplied an id, count as updated; else added.
+			if (it.id) updated++; else added++;
+		}
+	});
+
+	return { added, updated, skipped };
 }
