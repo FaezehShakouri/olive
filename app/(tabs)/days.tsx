@@ -5,8 +5,8 @@ import {
   AppState,
 } from "react-native";
 import { ThemedSafeAreaView } from '@/components/safe-area-view';
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { getAllMealsGroupedByDate, getTotalsByDate } from "@/lib/db";
 import { ThemedView } from "@/components/themed-view";
 import { ThemedText } from "@/components/themed-text";
 type Meal = { id: string; name: string; calories: number };
@@ -23,12 +23,16 @@ function formatDateKey(d: Date) {
 
 export default function DaysScreen() {
   const [mealsByDate, setMealsByDate] = useState<MealsByDate>({});
+  const [totalMeals, setTotalMeals] = useState<Record<string, number>>({});
   const loadMeals = useCallback(async () => {
     try {
-      const raw = await AsyncStorage.getItem(STORAGE_KEY);
-      setMealsByDate(raw ? JSON.parse(raw) : {});
+      const map = await getAllMealsGroupedByDate();
+      setMealsByDate(map);
+      const t = await getTotalsByDate();
+      setTotalMeals(t);
     } catch {
       setMealsByDate({});
+      setTotalMeals({});
     }
   }, []);
 
@@ -51,24 +55,6 @@ export default function DaysScreen() {
     });
     return () => sub.remove();
   }, [loadMeals]);
-  
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (!mounted) return;
-        if (raw) setMealsByDate(JSON.parse(raw));
-        else setMealsByDate({});
-      } catch {
-        setMealsByDate({});
-      }
-    })();
-    const sub = AsyncStorage; // placeholder to keep lints calm; no live updates available
-    return () => {
-      mounted = false;
-    };
-  }, []);
 
   const todayKey = formatDateKey(new Date());
 

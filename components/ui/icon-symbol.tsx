@@ -20,7 +20,10 @@ const MAPPING = {
   'xmark': 'close',
   'pencil': 'edit',
   'checkmark': 'check',
-  'calendar': 'calendar-today'
+  'calendar': 'calendar-today',
+  'gearshape': 'settings',
+  'square.and.arrow.up': 'share',
+  'arrow.down.doc': 'file-download'
 } as IconMapping;
 
 /**

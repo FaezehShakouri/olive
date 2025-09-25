@@ -11,25 +11,32 @@ export default function TabLayout() {
 
   return (
     <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Overview',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="days"
-        options={{
-          title: 'History',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
-        }}
-      />
-    </Tabs>
+    screenOptions={{
+      tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+      headerShown: false,
+      tabBarButton: HapticTab,
+    }}>
+    <Tabs.Screen
+      name="index"
+      options={{
+        title: 'Overview',
+        tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+      }}
+    />
+    <Tabs.Screen
+      name="days"
+      options={{
+        title: 'History',
+        tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+      }}
+    />
+    {/* <Tabs.Screen
+      name="settings"
+      options={{
+        title: 'Settings',
+        tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape" color={color} />,
+      }}
+    /> */}
+  </Tabs>
   );
 }

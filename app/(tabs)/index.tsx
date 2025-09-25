@@ -3,6 +3,7 @@ import { ThemedSafeAreaView } from "@/components/safe-area-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
+import { addMeal, deleteMeal, getMealsByDate, updateMeal } from "@/lib/db";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useMemo, useState } from "react";
 import {
@@ -64,14 +65,19 @@ export default function CaloriesScreen() {
 
   useEffect(() => {
     (async () => {
-      try {
-        const raw = await AsyncStorage.getItem(STORAGE_KEY);
-        if (raw) setMealsByDate(JSON.parse(raw));
-      } catch (e) {
-        console.warn("Failed to load data", e);
-      }
+      const dateKey = formatDateKey(currentDate);
+      const meals = await getMealsByDate(dateKey);
+      setMealsByDate({ [dateKey]: meals });
     })();
   }, []);
+
+  useEffect(() => {
+    (async () => {
+      const dateKey = formatDateKey(currentDate);
+      const meals = await getMealsByDate(dateKey);
+      setMealsByDate({ [dateKey]: meals });
+    })();
+  }, [currentDate]);
 
   useEffect(() => {
     const target = todaysMeals.reduce(
@@ -99,14 +105,8 @@ export default function CaloriesScreen() {
     return () => totalAnim.removeListener(id);
   }, [dateKey, todaysMeals, totalAnim]);
 
-  const persist = async (next: MealsByDate) => {
-    try {
-      setMealsByDate(next);
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(next));
-    } catch (e) {
-      console.warn("Failed to save data", e);
-      Alert.alert("Save error", "Could not save your data.");
-    }
+  const setLocal = (next: MealsByDate) => {
+    setMealsByDate(next);
   };
 
   const onAddMeal = async () => {
@@ -121,22 +121,18 @@ export default function CaloriesScreen() {
       Alert.alert("Invalid calories", "Enter a positive number.");
       return;
     }
-    const id = String(Date.now());
-    const next: MealsByDate = {
-      ...mealsByDate,
-      [dateKey]: [...todaysMeals, { id, name, calories }],
-    };
-    await persist(next);
+    const id = String(Date.now()) + Math.random().toString(16).slice(2);
+    await addMeal({ id, date: dateKey, name, calories });
+    const refreshed = await getMealsByDate(dateKey);
+    setLocal({ [dateKey]: refreshed });
     setMealName("");
     setMealCalories("");
   };
 
   const onDeleteMeal = async (id: string) => {
-    const next: MealsByDate = {
-      ...mealsByDate,
-      [dateKey]: todaysMeals.filter((m) => m.id !== id),
-    };
-    await persist(next);
+    await deleteMeal(id);
+    const refreshed = await getMealsByDate(dateKey);
+    setLocal({ [dateKey]: refreshed });
   };
 
   const confirmDeleteMeal = (id: string) => {
@@ -157,13 +153,9 @@ export default function CaloriesScreen() {
       Alert.alert("Invalid input", "Enter a valid name and positive calories.");
       return;
     }
-    const next: MealsByDate = {
-      ...mealsByDate,
-      [dateKey]: todaysMeals.map((m) =>
-        m.id === editingId ? { ...m, name: n, calories: c } : m
-      ),
-    };
-    await persist(next);
+    await updateMeal(editingId, n, c);
+    const refreshed = await getMealsByDate(dateKey);
+    setLocal({ [dateKey]: refreshed });
     setEditingId(null);
   };
 
