@@ -67,13 +67,13 @@ export default function SettingsScreen() {
         <ThemedText style={styles.desc}>
           Pick a JSON file with one of these formats:
         </ThemedText>
-        <ThemedText style={styles.code} darkColor="#222222">
+        <ThemedText style={styles.code}>
           {`[
   { "id": "123", "date": "2025-01-05", "name": "Chicken salad", "calories": 450 },
   { "date": "2025-01-05", "name": "Apple", "calories": 95 }
 ]`}
         </ThemedText>
-        <ThemedText style={[styles.code, { marginTop: 8 }]} darkColor="#222222">
+        <ThemedText style={[styles.code, { marginTop: 8 }]}>
           {`{
   "2025-01-05": [
     { "name": "Chicken salad", "calories": 450 },

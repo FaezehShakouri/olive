@@ -145,3 +145,19 @@ export async function bulkUpsertMeals(input: unknown): Promise<ImportResult> {
 
 	return { added, updated, skipped };
 }
+
+export async function getNameSuggestions(prefix: string, limit: number = 8): Promise<string[]> {
+	const db = await ensureDb();
+	const like = (prefix ?? "").trim().replace(/[%_]/g, "") + "%";
+	const rows = await db.getAllAsync<{ name: string }>(
+		`SELECT name
+     FROM meals
+     WHERE name LIKE ?
+     GROUP BY name
+     ORDER BY MAX(created_at) DESC, COUNT(*) DESC
+     LIMIT ?`,
+		[like, String(limit)]
+	);
+	return rows.map(r => r.name);
+}
+

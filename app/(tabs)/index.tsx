@@ -3,7 +3,13 @@ import { ThemedSafeAreaView } from "@/components/safe-area-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { addMeal, deleteMeal, getMealsByDate, updateMeal } from "@/lib/db";
+import {
+  addMeal,
+  deleteMeal,
+  getMealsByDate,
+  getNameSuggestions,
+  updateMeal,
+} from "@/lib/db";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -41,6 +47,8 @@ export default function CaloriesScreen() {
   const [mealsByDate, setMealsByDate] = useState<MealsByDate>({});
   const [mealName, setMealName] = useState("");
   const [mealCalories, setMealCalories] = useState("");
+  const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -107,6 +115,27 @@ export default function CaloriesScreen() {
   const setLocal = (next: MealsByDate) => {
     setMealsByDate(next);
   };
+
+  // Fetch name suggestions as the user types
+  useEffect(() => {
+    let cancelled = false;
+    const q = mealName.trim();
+    if (q.length === 0) {
+      setNameSuggestions([]);
+      return;
+    }
+    (async () => {
+      try {
+        const list = await getNameSuggestions(q, 8);
+        if (!cancelled) setNameSuggestions(list);
+      } catch {
+        if (!cancelled) setNameSuggestions([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [mealName]);
 
   const onAddMeal = async () => {
     Keyboard.dismiss();
@@ -282,11 +311,30 @@ export default function CaloriesScreen() {
           <TextInput
             placeholder="Meal name (e.g., Chicken salad)"
             value={mealName}
-            onChangeText={setMealName}
+            onChangeText={(t) => {
+              setMealName(t);
+              setShowSuggestions(true);
+            }}
             style={styles.input}
             returnKeyType="next"
             placeholderTextColor="#6B7280"
           />
+          {showSuggestions && nameSuggestions.length > 0 && (
+            <ThemedView style={styles.suggestionsBox} darkColor="#222222">
+              {nameSuggestions.map((s) => (
+                <TouchableOpacity
+                  key={s}
+                  style={styles.suggestionItem}
+                  onPress={() => {
+                    setMealName(s);
+                    setShowSuggestions(false);
+                  }}
+                >
+                  <ThemedText style={styles.suggestionText}>{s}</ThemedText>
+                </TouchableOpacity>
+              ))}
+            </ThemedView>
+          )}
           <TextInput
             placeholder="Calories (e.g., 450)"
             value={mealCalories}
@@ -427,6 +475,23 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   addBtnText: { fontWeight: "700", fontSize: 16 },
+
+  suggestionsBox: {
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    borderRadius: 8,
+    marginTop: 6,
+    marginBottom: 6,
+    overflow: "hidden",
+  },
+  suggestionItem: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: "#FFFFFF",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
+  },
+  suggestionText: { fontSize: 14, color: "#111827" },
 
   mealRow: {
     flexDirection: "row",
