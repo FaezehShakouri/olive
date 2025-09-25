@@ -4,7 +4,6 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { addMeal, deleteMeal, getMealsByDate, updateMeal } from "@/lib/db";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
