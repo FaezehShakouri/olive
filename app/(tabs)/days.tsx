@@ -80,7 +80,9 @@ export default function DaysScreen() {
 
   const renderMeal = (m: Meal) => (
     <ThemedView key={m.id} style={styles.mealRow} darkColor="#333333">
-      <ThemedText style={styles.mealName}>{m.name}</ThemedText>
+      <ThemedText style={styles.mealName} numberOfLines={2} ellipsizeMode="tail">
+        {m.name}
+      </ThemedText>
       <ThemedText style={styles.mealCalories}>{m.calories} kcal</ThemedText>
     </ThemedView>
   );
@@ -145,7 +147,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
   },
-  mealName: { fontSize: 16, fontWeight: "600" },
-  mealCalories: { fontSize: 14 },
+  mealName: { fontSize: 16, fontWeight: "600", flex: 1, flexShrink: 1, marginRight: 8 },
+  mealCalories: { fontSize: 14, flexShrink: 0, textAlign: "right" },
   emptyMeals: {},
 });
