@@ -3,7 +3,12 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { useColorScheme } from "@/hooks/use-color-scheme";
 import { bulkUpsertMeals, clearAllMeals, ImportResult } from "@/lib/db";
-import { getThemeOverride, setThemeOverride } from "@/lib/theme";
+import {
+  getCalorieGoal,
+  getThemeOverride,
+  setCalorieGoal,
+  setThemeOverride,
+} from "@/lib/theme";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import React, { useState } from "react";
@@ -12,12 +17,14 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
+  TextInput,
   TouchableOpacity,
 } from "react-native";
 
 export default function SettingsScreen() {
   const [status, setStatus] = useState<string>("");
   const [themeSwitch, setThemeSwitch] = useState<"light" | "dark" | null>(null);
+  const [calorieGoal, setCalorieGoalState] = useState<string>("2000");
   const systemScheme = useColorScheme();
 
   React.useEffect(() => {
@@ -27,6 +34,9 @@ export default function SettingsScreen() {
       if (v === null)
         setThemeSwitch(systemScheme === "dark" ? "dark" : "light");
       else setThemeSwitch(v);
+
+      const goal = await getCalorieGoal();
+      setCalorieGoalState(String(goal));
     })();
   }, [systemScheme]);
 
@@ -99,6 +109,30 @@ export default function SettingsScreen() {
         </ThemedView>
 
         <ThemedView style={styles.card} darkColor="#333333">
+          <ThemedText style={styles.title}>Goals</ThemedText>
+          <ThemedView style={styles.row} darkColor="#333333">
+            <ThemedText style={{ flex: 1 }}>Daily calorie goal</ThemedText>
+            <TextInput
+              value={calorieGoal}
+              onChangeText={setCalorieGoalState}
+              onBlur={async () => {
+                const goal = parseInt(calorieGoal, 10);
+                if (goal > 0 && goal <= 10000) {
+                  await setCalorieGoal(goal);
+                } else {
+                  const current = await getCalorieGoal();
+                  setCalorieGoalState(String(current));
+                }
+              }}
+              keyboardType="numeric"
+              style={styles.goalInput}
+              placeholder="2000"
+              placeholderTextColor="#6B7280"
+            />
+          </ThemedView>
+        </ThemedView>
+
+        <ThemedView style={styles.card} darkColor="#333333">
           <ThemedText style={styles.title}>Data</ThemedText>
           <ThemedView style={{ gap: 8 }} darkColor="#333333">
             <TouchableOpacity style={styles.btn} onPress={onImport}>
@@ -132,6 +166,18 @@ const styles = StyleSheet.create({
   headerSubtitle: { marginTop: 2, fontSize: 12 },
   title: { fontSize: 18, fontWeight: "800" },
   row: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
+  goalInput: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    fontSize: 16,
+    borderWidth: 1,
+    borderColor: "#D1D5DB",
+    color: "#111827",
+    minWidth: 80,
+    textAlign: "right",
+  },
   btn: {
     backgroundColor: "#2563EB",
     borderRadius: 8,

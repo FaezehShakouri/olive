@@ -10,6 +10,7 @@ import {
   getNameSuggestions,
   updateMeal,
 } from "@/lib/db";
+import { getCalorieGoal, subscribeCalorieGoal } from "@/lib/theme";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -59,6 +60,7 @@ export default function CaloriesScreen() {
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [totalsByDate, setTotalsByDate] = useState<Record<string, number>>({});
+  const [calorieGoal, setCalorieGoal] = useState<number>(2000);
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -79,6 +81,7 @@ export default function CaloriesScreen() {
 
   const [displayTotal, setDisplayTotal] = useState(0);
   const totalAnim = React.useRef(new Animated.Value(0)).current;
+  const progressAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     (async () => {
@@ -91,7 +94,14 @@ export default function CaloriesScreen() {
         const totals = await getTotalsByDate();
         setTotalsByDate(totals);
       } catch {}
+      // Load calorie goal
+      const goal = await getCalorieGoal();
+      setCalorieGoal(goal);
     })();
+
+    // Subscribe to calorie goal changes
+    const unsubGoal = subscribeCalorieGoal(setCalorieGoal);
+    return unsubGoal;
   }, []);
 
   useEffect(() => {
@@ -125,8 +135,18 @@ export default function CaloriesScreen() {
       setDisplayTotal(target);
     });
 
+    // Animate progress bar smoothly
+    const progressTarget = Math.min(1.2, target / calorieGoal); // Allow slight overshoot for better visual
+    progressAnim.stopAnimation();
+    Animated.timing(progressAnim, {
+      toValue: progressTarget,
+      duration: Math.min(1500, Math.max(600, target * 2.5)), // Slightly longer for smoother feel
+      easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Custom smooth bezier curve
+      useNativeDriver: false,
+    }).start();
+
     return () => totalAnim.removeListener(id);
-  }, [dateKey, todaysMeals, totalAnim]);
+  }, [dateKey, todaysMeals, totalAnim, calorieGoal]);
 
   const setLocal = (next: MealsByDate) => {
     setMealsByDate(next);
@@ -406,10 +426,43 @@ export default function CaloriesScreen() {
             </ThemedView>
 
             <ThemedView style={styles.totalBox} darkColor="#333333">
-              <ThemedText style={styles.totalLabel}>Total</ThemedText>
-              <ThemedText style={styles.totalValue}>
-                {displayTotal} kcal
-              </ThemedText>
+              <ThemedView style={styles.totalRow} darkColor="#333333">
+                <ThemedText style={styles.totalLabel}>Total</ThemedText>
+                <ThemedText style={styles.totalValue}>
+                  {displayTotal} / {calorieGoal} kcal
+                </ThemedText>
+              </ThemedView>
+              <ThemedView style={styles.progressContainer} darkColor="#333333">
+                <ThemedView style={styles.progressTrack} darkColor="#E5E7EB">
+                  <Animated.View
+                    style={[
+                      styles.progressBar,
+                      {
+                        width: progressAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ["0%", "100%"],
+                          extrapolate: "clamp",
+                        }),
+                        backgroundColor: progressAnim.interpolate({
+                          inputRange: [0, 0.3, 0.6, 0.85, 1, 1.2],
+                          outputRange: [
+                            "#EF4444", // Red - very low
+                            "#F97316", // Orange - low
+                            "#EAB308", // Yellow - medium
+                            "#84CC16", // Light green - good
+                            "#22C55E", // Green - goal reached
+                            "#16A34A", // Dark green - exceeded
+                          ],
+                          extrapolate: "clamp",
+                        }),
+                      },
+                    ]}
+                  />
+                </ThemedView>
+                <ThemedText style={styles.progressText} darkColor="#6B7280">
+                  {Math.round((displayTotal / calorieGoal) * 100)}%
+                </ThemedText>
+              </ThemedView>
             </ThemedView>
 
             <ThemedView style={styles.inputCard}>
@@ -637,17 +690,40 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     padding: 16,
     borderRadius: 12,
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "baseline",
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 2 },
     elevation: 2,
   },
+  totalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    marginBottom: 8,
+  },
   totalLabel: { fontSize: 16 },
   totalValue: { fontSize: 24, fontWeight: "800" },
+  progressContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  progressTrack: {
+    flex: 1,
+    height: 8,
+    borderRadius: 4,
+    overflow: "hidden",
+  },
+  progressBar: {
+    height: "100%",
+    borderRadius: 4,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: "600",
+    minWidth: 35,
+  },
 
   inputCard: {
     marginHorizontal: 16,
