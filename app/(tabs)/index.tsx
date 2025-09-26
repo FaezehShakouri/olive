@@ -77,7 +77,20 @@ export default function CaloriesScreen() {
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const dateKey = formatDateKey(currentDate);
-  const todaysMeals = mealsByDate[dateKey] || [];
+  const todaysMeals = useMemo(() => {
+    const meals = mealsByDate[dateKey] || [];
+    // Sort by time (most recent first), then by creation order
+    return [...meals].sort((a, b) => {
+      // First sort by time (descending - latest time first)
+      const timeA = a.time || "00:00";
+      const timeB = b.time || "00:00";
+      if (timeA !== timeB) {
+        return timeB.localeCompare(timeA);
+      }
+      // If times are equal, sort by ID (descending - most recent first)
+      return b.id.localeCompare(a.id);
+    });
+  }, [mealsByDate, dateKey]);
 
   const totalCalories = useMemo(
     () =>
