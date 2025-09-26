@@ -18,6 +18,7 @@ import {
   FlatList,
   Keyboard,
   KeyboardAvoidingView,
+  Modal,
   Platform,
   StyleSheet,
   TextInput,
@@ -49,6 +50,9 @@ export default function CaloriesScreen() {
   const [mealCalories, setMealCalories] = useState("");
   const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+  const [totalsByDate, setTotalsByDate] = useState<Record<string, number>>({});
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -75,6 +79,12 @@ export default function CaloriesScreen() {
       const dateKey = formatDateKey(currentDate);
       const meals = await getMealsByDate(dateKey);
       setMealsByDate({ [dateKey]: meals });
+      // Preload totals for calendar
+      try {
+        const { getTotalsByDate } = await import("@/lib/db");
+        const totals = await getTotalsByDate();
+        setTotalsByDate(totals);
+      } catch {}
     })();
   }, []);
 
@@ -189,6 +199,33 @@ export default function CaloriesScreen() {
 
   const goToday = () => setCurrentDate(new Date());
 
+  // Calendar helpers
+  const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
+  const endOfMonth = (d: Date) =>
+    new Date(d.getFullYear(), d.getMonth() + 1, 0);
+  const addMonths = (d: Date, m: number) =>
+    new Date(d.getFullYear(), d.getMonth() + m, 1);
+  const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+  const monthDays = useMemo(() => {
+    const start = startOfMonth(calendarMonth);
+    const end = endOfMonth(calendarMonth);
+    const padStart = start.getDay();
+    const days: Array<{ date: Date | null; key: string }>[] = [];
+    const row: Array<{ date: Date | null; key: string }>[] = [];
+    const cells: { date: Date | null; key: string }[] = [];
+    // Leading blanks
+    for (let i = 0; i < padStart; i++) cells.push({ date: null, key: `b${i}` });
+    for (let day = 1; day <= end.getDate(); day++) {
+      const d = new Date(start.getFullYear(), start.getMonth(), day);
+      cells.push({ date: d, key: formatDateKey(d) });
+    }
+    // Chunk into weeks of 7
+    const rows: Array<Array<{ date: Date | null; key: string }>> = [];
+    for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
+    return rows;
+  }, [calendarMonth]);
+
   const renderItem = ({ item }: { item: Meal }) => (
     <ThemedView style={styles.mealRow} darkColor="#333333">
       {editingId === item.id ? (
@@ -285,7 +322,29 @@ export default function CaloriesScreen() {
             </ThemedText>
           </TouchableOpacity>
           <ThemedView style={styles.dateBox}>
-            <ThemedText style={styles.dateText}>{dateKey}</ThemedText>
+            <ThemedView style={styles.dateRow}>
+              <ThemedText style={styles.dateText}>{dateKey}</ThemedText>
+              <TouchableOpacity
+                onPress={async () => {
+                  setCalendarMonth(
+                    new Date(
+                      currentDate.getFullYear(),
+                      currentDate.getMonth(),
+                      1
+                    )
+                  );
+                  try {
+                    const { getTotalsByDate } = await import("@/lib/db");
+                    const totals = await getTotalsByDate();
+                    setTotalsByDate(totals);
+                  } catch {}
+                  setShowCalendar(true);
+                }}
+                style={styles.calendarBtn}
+              >
+                <IconSymbol name="calendar" size={18} color="#2563EB" />
+              </TouchableOpacity>
+            </ThemedView>
             <TouchableOpacity onPress={goToday}>
               <ThemedText style={styles.todayText} darkColor="#A1CEDC">
                 Today
@@ -380,6 +439,92 @@ export default function CaloriesScreen() {
             setPendingDeleteId(null);
           }}
         />
+        {/* Calendar Modal */}
+        <Modal
+          visible={showCalendar}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowCalendar(false)}
+        >
+          <ThemedView style={styles.modalBackdrop}>
+            <ThemedView style={styles.calendarCard} darkColor="#111827">
+              <ThemedView style={styles.calendarHeader} darkColor="#111827">
+                <TouchableOpacity
+                  onPress={() => setCalendarMonth((d) => addMonths(d, -1))}
+                  style={styles.navBtnSm}
+                >
+                  <ThemedText style={styles.navBtnText} darkColor="#333333">
+                    {"‹"}
+                  </ThemedText>
+                </TouchableOpacity>
+                <ThemedText style={styles.monthTitle}>
+                  {calendarMonth.getFullYear()}-
+                  {String(calendarMonth.getMonth() + 1).padStart(2, "0")}
+                </ThemedText>
+                <TouchableOpacity
+                  onPress={() => setCalendarMonth((d) => addMonths(d, 1))}
+                  style={styles.navBtnSm}
+                >
+                  <ThemedText style={styles.navBtnText} darkColor="#333333">
+                    {"›"}
+                  </ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
+              <ThemedView style={styles.weekRow} darkColor="#111827">
+                {weekdayLabels.map((w) => (
+                  <ThemedText key={w} style={styles.weekday}>
+                    {w}
+                  </ThemedText>
+                ))}
+              </ThemedView>
+              {monthDays.map((week, i) => (
+                <ThemedView key={i} style={styles.weekRow} darkColor="#111827">
+                  {week.map(({ date, key }) => {
+                    if (!date)
+                      return (
+                        <ThemedView
+                          key={key}
+                          style={styles.dayCellEmpty}
+                          darkColor="#111827"
+                        />
+                      );
+                    const k = formatDateKey(date);
+                    const total = totalsByDate[k] ?? 0;
+                    const isSelected = k === formatDateKey(currentDate);
+                    return (
+                      <TouchableOpacity
+                        key={key}
+                        style={[
+                          styles.dayCell,
+                          isSelected && styles.daySelected,
+                        ]}
+                        onPress={() => {
+                          setCurrentDate(date);
+                          setShowCalendar(false);
+                        }}
+                      >
+                        <ThemedText style={styles.dayNum} darkColor="#111827">
+                          {date.getDate()}
+                        </ThemedText>
+                        {total > 0 && (
+                          <ThemedText style={styles.dayTotal} darkColor="#111827">
+                            {total}
+                          </ThemedText>
+                        )}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ThemedView>
+              ))}
+              <TouchableOpacity
+                style={[styles.addBtn, { marginTop: 12 }]}
+                onPress={() => setShowCalendar(false)}
+              >
+                <ThemedText style={styles.addBtnText}>Close</ThemedText>
+              </TouchableOpacity>
+            </ThemedView>
+          </ThemedView>
+        </Modal>
       </KeyboardAvoidingView>
     </ThemedSafeAreaView>
   );
@@ -404,6 +549,13 @@ const styles = StyleSheet.create({
   },
   navBtnText: { fontSize: 24, fontWeight: "600" },
   dateBox: { flex: 1, alignItems: "center" },
+  dateRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  calendarBtn: {
+    marginLeft: 6,
+    padding: 6,
+    borderRadius: 9999,
+    backgroundColor: "#E5E7EB",
+  },
   dateText: { fontSize: 18, fontWeight: "700" },
   todayText: { marginTop: 2, fontWeight: "600" },
 
@@ -475,6 +627,56 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   addBtnText: { fontWeight: "700", fontSize: 16 },
+
+  // Calendar styles
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 16,
+  },
+  calendarCard: {
+    width: "100%",
+    maxWidth: 420,
+    borderRadius: 12,
+    padding: 12,
+  },
+  calendarHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
+  monthTitle: { fontSize: 16, fontWeight: "800" },
+  navBtnSm: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: "#EDEDED",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  weekRow: { flexDirection: "row", justifyContent: "space-between" },
+  weekday: {
+    width: `${100 / 7}%`,
+    textAlign: "center",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  dayCell: {
+    width: `${100 / 7}%`,
+    aspectRatio: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 8,
+    backgroundColor: "#F3F4F6",
+    marginVertical: 4,
+  },
+  dayCellEmpty: { width: `${100 / 7}%`, aspectRatio: 1, marginVertical: 4 },
+  daySelected: { backgroundColor: "#DBEAFE" },
+  dayNum: { fontSize: 12, fontWeight: "700" },
+  dayTotal: { fontSize: 10, marginTop: 2 },
 
   suggestionsBox: {
     borderWidth: 1,
