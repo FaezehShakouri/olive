@@ -105,7 +105,9 @@ export default function CaloriesScreen() {
   );
 
   const [displayTotal, setDisplayTotal] = useState(0);
+  const [displayRemaining, setDisplayRemaining] = useState(0);
   const totalAnim = React.useRef(new Animated.Value(0)).current;
+  const remainingAnim = React.useRef(new Animated.Value(0)).current;
   const progressAnim = React.useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -142,12 +144,19 @@ export default function CaloriesScreen() {
       (s, m) => s + (Number.isFinite(+m.calories) ? +m.calories : 0),
       0
     );
+    const remainingTarget = Math.max(0, calorieGoal - target);
 
     totalAnim.stopAnimation();
     totalAnim.setValue(0);
+    remainingAnim.stopAnimation();
+    remainingAnim.setValue(0);
 
-    const id = totalAnim.addListener(({ value }) => {
+    const totalId = totalAnim.addListener(({ value }) => {
       setDisplayTotal(Math.round(value));
+    });
+
+    const remainingId = remainingAnim.addListener(({ value }) => {
+      setDisplayRemaining(Math.round(value));
     });
 
     Animated.timing(totalAnim, {
@@ -156,8 +165,18 @@ export default function CaloriesScreen() {
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start(() => {
-      totalAnim.removeListener(id);
+      totalAnim.removeListener(totalId);
       setDisplayTotal(target);
+    });
+
+    Animated.timing(remainingAnim, {
+      toValue: remainingTarget,
+      duration: Math.min(1200, Math.max(350, remainingTarget * 2)), // quick but smooth
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: false,
+    }).start(() => {
+      remainingAnim.removeListener(remainingId);
+      setDisplayRemaining(remainingTarget);
     });
 
     // Animate progress bar smoothly
@@ -170,8 +189,11 @@ export default function CaloriesScreen() {
       useNativeDriver: false,
     }).start();
 
-    return () => totalAnim.removeListener(id);
-  }, [dateKey, todaysMeals, totalAnim, calorieGoal]);
+    return () => {
+      totalAnim.removeListener(totalId);
+      remainingAnim.removeListener(remainingId);
+    };
+  }, [dateKey, todaysMeals, totalAnim, remainingAnim, calorieGoal]);
 
   const setLocal = (next: MealsByDate) => {
     setMealsByDate(next);
@@ -458,7 +480,7 @@ export default function CaloriesScreen() {
 
             <ThemedView style={styles.calorieCard}>
               <ThemedText style={styles.remainingValue}>
-                {Math.max(0, calorieGoal - totalCalories)} kcal
+                {displayRemaining} kcal
               </ThemedText>
               <ThemedText style={styles.remainingSubtext}>Left</ThemedText>
 
