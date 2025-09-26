@@ -389,6 +389,8 @@ export default function CaloriesScreen() {
           minPointers={1}
           maxPointers={1}
           shouldCancelWhenOutside={false}
+          activeOffsetX={[-30, 30]}
+          failOffsetY={[-10, 10]}
         >
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -523,23 +525,29 @@ export default function CaloriesScreen() {
               </TouchableOpacity>
             </ThemedView>
 
-            <FlatList
-              data={todaysMeals}
-              keyExtractor={(item) => item.id}
-              renderItem={renderItem}
-              contentContainerStyle={
-                todaysMeals.length === 0 && {
-                  flex: 1,
-                  justifyContent: "center",
+            <ThemedView style={{ flex: 1 }}>
+              <FlatList
+                data={todaysMeals}
+                keyExtractor={(item) => item.id}
+                renderItem={renderItem}
+                contentContainerStyle={
+                  todaysMeals.length === 0
+                    ? { flex: 1, justifyContent: "center" }
+                    : { paddingBottom: 20 }
                 }
-              }
-              ListEmptyComponent={
-                <ThemedText style={styles.emptyText}>
-                  No meals yet. Add your first meal for {dateKey}.
-                </ThemedText>
-              }
-              style={{ flex: 1 }}
-            />
+                ListEmptyComponent={
+                  <ThemedText style={styles.emptyText}>
+                    No meals yet. Add your first meal for {dateKey}.
+                  </ThemedText>
+                }
+                style={{ flex: 1 }}
+                showsVerticalScrollIndicator={true}
+                bounces={true}
+                scrollEnabled={true}
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled={true}
+              />
+            </ThemedView>
             <ConfirmDialog
               visible={pendingDeleteId !== null}
               title="Delete meal"
