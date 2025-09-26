@@ -182,7 +182,7 @@ const styles = StyleSheet.create({
   cardDate: { fontSize: 18, fontWeight: "400", backgroundColor: "transparent" },
   cardTotal: {
     fontSize: 16,
-    fontWeight: "300",
+    fontWeight: "600",
     opacity: 0.8,
     backgroundColor: "transparent",
   },
