@@ -221,6 +221,12 @@ export default function CaloriesScreen() {
       const d = new Date(start.getFullYear(), start.getMonth(), day);
       cells.push({ date: d, key: formatDateKey(d) });
     }
+    // Trailing blanks to fill the last week
+    const remainder = cells.length % 7;
+    if (remainder !== 0) {
+      const padEnd = 7 - remainder;
+      for (let i = 0; i < padEnd; i++) cells.push({ date: null, key: `e${i}` });
+    }
     // Chunk into weeks of 7
     const rows: Array<Array<{ date: Date | null; key: string }>> = [];
     for (let i = 0; i < cells.length; i += 7) rows.push(cells.slice(i, i + 7));
@@ -483,7 +489,7 @@ export default function CaloriesScreen() {
                   {monthDays.map((week, i) => (
                     <ThemedView
                       key={i}
-                      style={styles.weekRow}
+                      style={styles.weekRowDays}
                       darkColor="#111827"
                     >
                       {week.map(({ date, key }) => {
@@ -492,7 +498,7 @@ export default function CaloriesScreen() {
                             <ThemedView
                               key={key}
                               style={styles.dayCellEmpty}
-                              darkColor="#111827"
+                              darkColor="#333333"
                             />
                           );
                         const k = formatDateKey(date);
@@ -667,6 +673,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   weekRow: { flexDirection: "row", justifyContent: "space-between" },
+  weekRowDays: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    columnGap: 1,
+  },
   weekday: {
     width: `${100 / 7}%`,
     textAlign: "center",
@@ -674,7 +685,7 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   dayCell: {
-    width: `${100 / 7}%`,
+    width: `${(100 - 6 * 6) / 5}%`,
     aspectRatio: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -682,7 +693,13 @@ const styles = StyleSheet.create({
     backgroundColor: "#F3F4F6",
     marginVertical: 4,
   },
-  dayCellEmpty: { width: `${100 / 7}%`, aspectRatio: 1, marginVertical: 4 },
+  dayCellEmpty: {
+    width: `${(100 - 6 * 6) / 5}%`,
+    aspectRatio: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    marginVertical: 4,
+  },
   daySelected: { backgroundColor: "#DBEAFE" },
   dayNum: { fontSize: 12, fontWeight: "700" },
   dayTotal: { fontSize: 10, marginTop: 2 },
