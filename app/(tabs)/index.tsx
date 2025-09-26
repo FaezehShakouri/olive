@@ -439,14 +439,34 @@ export default function CaloriesScreen() {
               </TouchableOpacity>
             </ThemedView>
 
-            <ThemedView style={styles.totalBox}>
-              <ThemedView style={styles.totalRow}>
-                <ThemedText style={styles.totalLabel}>Total</ThemedText>
-                <ThemedText style={styles.totalValue}>
-                  {displayTotal} / {calorieGoal} kcal
-                </ThemedText>
+            <ThemedView style={styles.calorieCard}>
+              <ThemedText style={styles.remainingLabel}>You can eat</ThemedText>
+              <ThemedText style={styles.remainingValue}>
+                {Math.max(0, calorieGoal - totalCalories)} kcal
+              </ThemedText>
+              <ThemedText style={styles.remainingSubtext}>
+                more today
+              </ThemedText>
+
+              <ThemedView style={styles.statsRow} darkColor="transparent">
+                <ThemedView style={styles.statItem} darkColor="transparent">
+                  <ThemedText style={styles.statValue}>
+                    {displayTotal}
+                  </ThemedText>
+                  <ThemedText style={styles.statLabel}>Consumed</ThemedText>
+                </ThemedView>
+                <ThemedView style={styles.statDivider} />
+                <ThemedView style={styles.statItem} darkColor="transparent">
+                  <ThemedText style={styles.statValue}>
+                    {calorieGoal}
+                  </ThemedText>
+                  <ThemedText style={styles.statLabel}>Daily Goal</ThemedText>
+                </ThemedView>
               </ThemedView>
-              <ThemedView style={styles.progressContainer}>
+              <ThemedView
+                style={styles.progressContainer}
+                darkColor="transparent"
+              >
                 <ThemedView style={styles.progressTrack}>
                   <Animated.View
                     style={[
@@ -707,21 +727,67 @@ const styles = StyleSheet.create({
     color: "#6B8E23",
   },
 
-  totalBox: {
-    marginHorizontal: 20,
+  calorieCard: {
+    marginHorizontal: 16,
     marginVertical: 12,
-    padding: 20,
-    borderRadius: 16,
-    backgroundColor: "transparent",
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    backgroundColor: "rgba(156, 175, 136, 0.08)",
+    alignItems: "center",
   },
-  totalRow: {
+  remainingLabel: {
+    fontSize: 16,
+    fontWeight: "400",
+    opacity: 0.8,
+    textAlign: "center",
+    marginBottom: 2,
+  },
+  remainingValue: {
+    fontSize: 42,
+    fontWeight: "200",
+    letterSpacing: -2,
+    textAlign: "center",
+    color: "#6B8E23",
+    lineHeight: 48,
+  },
+  remainingSubtext: {
+    fontSize: 16,
+    fontWeight: "400",
+    opacity: 0.8,
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  statsRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "baseline",
-    marginBottom: 12,
+    alignItems: "center",
+    justifyContent: "space-around",
+    width: "100%",
+    marginBottom: 20,
+    paddingHorizontal: 10,
   },
-  totalLabel: { fontSize: 14, fontWeight: "400", opacity: 0.8 },
-  totalValue: { fontSize: 28, fontWeight: "300", letterSpacing: -0.5 },
+  statItem: {
+    alignItems: "center",
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 20,
+    fontWeight: "500",
+    opacity: 0.9,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontWeight: "400",
+    opacity: 0.7,
+    textAlign: "center",
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: "rgba(107, 142, 35, 0.15)",
+    marginHorizontal: 20,
+  },
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
