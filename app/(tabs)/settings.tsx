@@ -93,9 +93,9 @@ export default function SettingsScreen() {
   return (
     <ThemedSafeAreaView style={{ flex: 1 }}>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-        <ThemedView style={styles.card} darkColor="#333333">
+        <ThemedView style={styles.card}>
           <ThemedText style={styles.title}>Appearance</ThemedText>
-          <ThemedView style={styles.row} darkColor="#333333">
+          <ThemedView style={styles.row}>
             <ThemedText style={{ flex: 1 }}>Dark mode</ThemedText>
             <Switch
               value={themeSwitch === "dark"}
@@ -108,9 +108,9 @@ export default function SettingsScreen() {
           </ThemedView>
         </ThemedView>
 
-        <ThemedView style={styles.card} darkColor="#333333">
+        <ThemedView style={styles.card}>
           <ThemedText style={styles.title}>Goals</ThemedText>
-          <ThemedView style={styles.row} darkColor="#333333">
+          <ThemedView style={styles.row}>
             <ThemedText style={{ flex: 1 }}>Daily calorie goal</ThemedText>
             <TextInput
               value={calorieGoal}
@@ -132,9 +132,9 @@ export default function SettingsScreen() {
           </ThemedView>
         </ThemedView>
 
-        <ThemedView style={styles.card} darkColor="#333333">
+        <ThemedView style={styles.card}>
           <ThemedText style={styles.title}>Data</ThemedText>
-          <ThemedView style={{ gap: 8 }} darkColor="#333333">
+          <ThemedView style={{ gap: 8 }}>
             <TouchableOpacity style={styles.btn} onPress={onImport}>
               <ThemedText style={styles.btnText}>Import from JSON</ThemedText>
             </TouchableOpacity>
@@ -156,37 +156,37 @@ export default function SettingsScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    margin: 16,
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
+    margin: 20,
+    padding: 20,
+    borderRadius: 16,
+    gap: 16,
+    backgroundColor: "transparent",
   },
-  section: { marginBottom: 0, paddingBottom: 8 },
-  headerTitle: { fontSize: 22, fontWeight: "800" },
-  headerSubtitle: { marginTop: 2, fontSize: 12 },
-  title: { fontSize: 18, fontWeight: "800" },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
+  section: { marginBottom: 0, paddingBottom: 12 },
+  headerTitle: { fontSize: 24, fontWeight: "300", letterSpacing: -0.5 },
+  headerSubtitle: { marginTop: 4, fontSize: 13, opacity: 0.7 },
+  title: { fontSize: 16, fontWeight: "500", marginBottom: 8 },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 12 },
   goalInput: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "rgba(107, 114, 128, 0.1)",
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    color: "#111827",
+    borderWidth: 0,
+    color: "#F8FAFC",
     minWidth: 80,
     textAlign: "right",
   },
   btn: {
-    backgroundColor: "#2563EB",
-    borderRadius: 8,
+    backgroundColor: "#8B5CF6",
+    borderRadius: 12,
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
   danger: {
-    backgroundColor: "#EF4444",
+    backgroundColor: "#64748B",
   },
-  btnText: { color: "#FFFFFF", fontWeight: "700" },
-  status: { marginTop: 6, fontSize: 12 },
+  btnText: { color: "#FFFFFF", fontWeight: "400", fontSize: 15 },
+  status: { marginTop: 8, fontSize: 12, opacity: 0.8 },
 });

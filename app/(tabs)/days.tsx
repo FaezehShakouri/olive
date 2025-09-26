@@ -1,14 +1,10 @@
-import React, { useEffect, useMemo, useState, useCallback } from "react";
-import {
-  FlatList,
-  StyleSheet,
-  AppState,
-} from "react-native";
-import { ThemedSafeAreaView } from '@/components/safe-area-view';
-import { useFocusEffect } from "@react-navigation/native";
-import { getAllMealsGroupedByDate, getTotalsByDate } from "@/lib/db";
-import { ThemedView } from "@/components/themed-view";
+import { ThemedSafeAreaView } from "@/components/safe-area-view";
 import { ThemedText } from "@/components/themed-text";
+import { ThemedView } from "@/components/themed-view";
+import { getAllMealsGroupedByDate, getTotalsByDate } from "@/lib/db";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { AppState, FlatList, StyleSheet } from "react-native";
 type Meal = { id: string; name: string; calories: number };
 type MealsByDate = Record<string, Meal[]>;
 
@@ -79,8 +75,12 @@ export default function DaysScreen() {
   }, [dateKeys, mealsByDate]);
 
   const renderMeal = (m: Meal) => (
-    <ThemedView key={m.id} style={styles.mealRow} darkColor="#333333">
-      <ThemedText style={styles.mealName} numberOfLines={2} ellipsizeMode="tail">
+    <ThemedView key={m.id} style={styles.mealRow}>
+      <ThemedText
+        style={styles.mealName}
+        numberOfLines={2}
+        ellipsizeMode="tail"
+      >
         {m.name}
       </ThemedText>
       <ThemedText style={styles.mealCalories}>{m.calories} kcal</ThemedText>
@@ -91,22 +91,24 @@ export default function DaysScreen() {
     const meals = mealsByDate[dateKey] || [];
     const total = totals[dateKey] ?? 0;
     return (
-      <ThemedView style={styles.card} darkColor="#333333">
-        <ThemedView style={styles.cardHeader} darkColor="#333333">
+      <ThemedView style={styles.card}>
+        <ThemedView style={styles.cardHeader}>
           <ThemedText style={styles.cardDate}>{dateKey}</ThemedText>
           <ThemedText style={styles.cardTotal}>{total} kcal</ThemedText>
         </ThemedView>
         {meals.length === 0 ? (
           <ThemedText style={styles.emptyMeals}>No meals logged.</ThemedText>
         ) : (
-          <ThemedView style={styles.mealsList} darkColor="#333333">{meals.map(renderMeal)}</ThemedView>
+          <ThemedView style={styles.mealsList}>
+            {meals.map(renderMeal)}
+          </ThemedView>
         )}
       </ThemedView>
     );
   };
 
   return (
-    <ThemedSafeAreaView style={{flex: 1}}>
+    <ThemedSafeAreaView style={{ flex: 1 }}>
       <FlatList
         data={dateKeys}
         keyExtractor={(k) => k}
@@ -120,34 +122,42 @@ export default function DaysScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   card: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    borderRadius: 12,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    marginHorizontal: 20,
+    marginVertical: 6,
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: "transparent",
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "baseline",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  cardDate: { fontSize: 18, fontWeight: "700" },
-  cardTotal: { fontSize: 16, fontWeight: "700" },
-  mealsList: { gap: 8 },
+  cardDate: { fontSize: 18, fontWeight: "400" },
+  cardTotal: { fontSize: 16, fontWeight: "300", opacity: 0.8 },
+  mealsList: { gap: 6 },
   mealRow: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderRadius: 8,
-    paddingVertical: 10,
+    paddingVertical: 8,
     paddingHorizontal: 12,
+    backgroundColor: "rgba(107, 114, 128, 0.05)",
   },
-  mealName: { fontSize: 16, fontWeight: "600", flex: 1, flexShrink: 1, marginRight: 8 },
-  mealCalories: { fontSize: 14, flexShrink: 0, textAlign: "right" },
-  emptyMeals: {},
+  mealName: {
+    fontSize: 15,
+    fontWeight: "400",
+    flex: 1,
+    flexShrink: 1,
+    marginRight: 8,
+  },
+  mealCalories: {
+    fontSize: 13,
+    flexShrink: 0,
+    textAlign: "right",
+    opacity: 0.7,
+  },
+  emptyMeals: { opacity: 0.6, fontSize: 14, fontWeight: "300" },
 });

@@ -324,7 +324,7 @@ export default function CaloriesScreen() {
         </>
       ) : (
         <>
-          <ThemedView style={{ flex: 1 }} darkColor="#333333">
+          <ThemedView style={{ flex: 1 }} darkColor="transparent">
             <ThemedText style={styles.mealName}>{item.name}</ThemedText>
             <ThemedText style={styles.mealCalories}>
               {item.calories} kcal
@@ -337,7 +337,7 @@ export default function CaloriesScreen() {
               gap: 8,
               marginLeft: 8,
             }}
-            darkColor="#333333"
+            darkColor="transparent"
           >
             <TouchableOpacity
               style={styles.iconBtn}
@@ -381,9 +381,7 @@ export default function CaloriesScreen() {
                 style={styles.navBtn}
                 onPress={() => setCurrentDate((d) => addDays(d, -1))}
               >
-                <ThemedText style={styles.navBtnText} darkColor="#333333">
-                  {"‹"}
-                </ThemedText>
+                <ThemedText style={styles.navBtnText}>{"‹"}</ThemedText>
               </TouchableOpacity>
               <ThemedView style={styles.dateBox}>
                 <ThemedView style={styles.dateRow}>
@@ -406,34 +404,30 @@ export default function CaloriesScreen() {
                     }}
                     style={styles.calendarBtn}
                   >
-                    <IconSymbol name="calendar" size={18} color="#A1CEDC" />
+                    <IconSymbol name="calendar" size={18} color="#8B5CF6" />
                   </TouchableOpacity>
                 </ThemedView>
                 <TouchableOpacity onPress={goToday}>
-                  <ThemedText style={styles.todayText} darkColor="#A1CEDC">
-                    Today
-                  </ThemedText>
+                  <ThemedText style={styles.todayText}>Today</ThemedText>
                 </TouchableOpacity>
               </ThemedView>
               <TouchableOpacity
                 style={styles.navBtn}
                 onPress={() => setCurrentDate((d) => addDays(d, 1))}
               >
-                <ThemedText style={styles.navBtnText} darkColor="#333333">
-                  {"›"}
-                </ThemedText>
+                <ThemedText style={styles.navBtnText}>{"›"}</ThemedText>
               </TouchableOpacity>
             </ThemedView>
 
-            <ThemedView style={styles.totalBox} darkColor="#333333">
-              <ThemedView style={styles.totalRow} darkColor="#333333">
+            <ThemedView style={styles.totalBox}>
+              <ThemedView style={styles.totalRow}>
                 <ThemedText style={styles.totalLabel}>Total</ThemedText>
                 <ThemedText style={styles.totalValue}>
                   {displayTotal} / {calorieGoal} kcal
                 </ThemedText>
               </ThemedView>
-              <ThemedView style={styles.progressContainer} darkColor="#333333">
-                <ThemedView style={styles.progressTrack} darkColor="#E5E7EB">
+              <ThemedView style={styles.progressContainer}>
+                <ThemedView style={styles.progressTrack}>
                   <Animated.View
                     style={[
                       styles.progressBar,
@@ -446,12 +440,12 @@ export default function CaloriesScreen() {
                         backgroundColor: progressAnim.interpolate({
                           inputRange: [0, 0.3, 0.6, 0.85, 1, 1.2],
                           outputRange: [
-                            "#EF4444", // Red - very low
-                            "#F97316", // Orange - low
-                            "#EAB308", // Yellow - medium
-                            "#84CC16", // Light green - good
-                            "#22C55E", // Green - goal reached
-                            "#16A34A", // Dark green - exceeded
+                            "#64748B", // Slate - very low
+                            "#94A3B8", // Light slate - low
+                            "#CBD5E1", // Lighter slate - medium
+                            "#A78BFA", // Soft purple - good
+                            "#8B5CF6", // Purple - goal reached
+                            "#7C3AED", // Deep purple - exceeded
                           ],
                           extrapolate: "clamp",
                         }),
@@ -459,7 +453,7 @@ export default function CaloriesScreen() {
                     ]}
                   />
                 </ThemedView>
-                <ThemedText style={styles.progressText} darkColor="#6B7280">
+                <ThemedText style={styles.progressText}>
                   {Math.round((displayTotal / calorieGoal) * 100)}%
                 </ThemedText>
               </ThemedView>
@@ -478,7 +472,7 @@ export default function CaloriesScreen() {
                 placeholderTextColor="#6B7280"
               />
               {showSuggestions && nameSuggestions.length > 0 && (
-                <ThemedView style={styles.suggestionsBox} darkColor="#222222">
+                <ThemedView style={styles.suggestionsBox}>
                   {nameSuggestions.map((s) => (
                     <TouchableOpacity
                       key={s}
@@ -627,17 +621,11 @@ export default function CaloriesScreen() {
                                   setShowCalendar(false);
                                 }}
                               >
-                                <ThemedText
-                                  style={styles.dayNum}
-                                  darkColor="#111827"
-                                >
+                                <ThemedText style={styles.dayNum}>
                                   {date.getDate()}
                                 </ThemedText>
                                 {total > 0 && (
-                                  <ThemedText
-                                    style={styles.dayTotal}
-                                    darkColor="#111827"
-                                  >
+                                  <ThemedText style={styles.dayTotal}>
                                     {total}
                                   </ThemedText>
                                 )}
@@ -663,89 +651,84 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    paddingBottom: 4,
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 8,
   },
   navBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#EDEDED",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "transparent",
     alignItems: "center",
     justifyContent: "center",
   },
-  navBtnText: { fontSize: 24, fontWeight: "600" },
+  navBtnText: { fontSize: 20, fontWeight: "300", color: "#6B7280" },
   dateBox: { flex: 1, alignItems: "center" },
-  dateRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  dateRow: { flexDirection: "row", alignItems: "center", gap: 6 },
   calendarBtn: {
-    marginLeft: 1,
-    padding: 1,
+    marginLeft: 4,
+    padding: 4,
+    borderRadius: 6,
+    backgroundColor: "transparent",
   },
-  dateText: { fontSize: 18, fontWeight: "700" },
-  todayText: { marginTop: 2, fontWeight: "600" },
+  dateText: { fontSize: 20, fontWeight: "500" },
+  todayText: { marginTop: 4, fontWeight: "400", fontSize: 12, opacity: 0.7 },
 
   totalBox: {
-    marginHorizontal: 16,
-    marginVertical: 8,
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    marginHorizontal: 20,
+    marginVertical: 12,
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: "transparent",
   },
   totalRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "baseline",
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  totalLabel: { fontSize: 16 },
-  totalValue: { fontSize: 24, fontWeight: "800" },
+  totalLabel: { fontSize: 14, fontWeight: "400", opacity: 0.8 },
+  totalValue: { fontSize: 28, fontWeight: "300", letterSpacing: -0.5 },
   progressContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
   },
   progressTrack: {
     flex: 1,
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
     overflow: "hidden",
+    backgroundColor: "rgba(107, 114, 128, 0.2)",
   },
   progressBar: {
     height: "100%",
-    borderRadius: 4,
+    borderRadius: 3,
   },
   progressText: {
-    fontSize: 12,
-    fontWeight: "600",
-    minWidth: 35,
+    fontSize: 11,
+    fontWeight: "400",
+    minWidth: 32,
+    opacity: 0.7,
   },
 
   inputCard: {
-    marginHorizontal: 16,
-    marginBottom: 8,
-    padding: 12,
-    borderRadius: 12,
-    gap: 8,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
+    marginHorizontal: 20,
+    marginBottom: 12,
+    padding: 16,
+    borderRadius: 16,
+    gap: 12,
+    backgroundColor: "transparent",
   },
   input: {
-    backgroundColor: "#FFFFFF",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
+    backgroundColor: "rgba(107, 114, 128, 0.1)",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    color: "#111827",
+    borderWidth: 0,
+    color: "#F8FAFC",
   },
   iconBtn: {
     paddingHorizontal: 10,
@@ -770,12 +753,12 @@ const styles = StyleSheet.create({
   },
   iconBtnConfirmText: { color: "white", fontWeight: "700" },
   addBtn: {
-    backgroundColor: "#22C55E",
-    borderRadius: 8,
+    backgroundColor: "#8B5CF6",
+    borderRadius: 12,
     alignItems: "center",
-    paddingVertical: 12,
+    paddingVertical: 14,
   },
-  addBtnText: { fontWeight: "700", fontSize: 16 },
+  addBtnText: { fontWeight: "500", fontSize: 16, color: "#FFFFFF" },
 
   // Calendar styles
   modalBackdrop: {
@@ -788,21 +771,21 @@ const styles = StyleSheet.create({
   calendarCard: {
     width: "100%",
     maxWidth: 420,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 16,
+    padding: 16,
   },
   calendarHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  monthTitle: { fontSize: 16, fontWeight: "800" },
+  monthTitle: { fontSize: 18, fontWeight: "400" },
   navBtnSm: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#EDEDED",
+    backgroundColor: "rgba(107, 114, 128, 0.2)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -815,61 +798,74 @@ const styles = StyleSheet.create({
   weekday: {
     width: `${100 / 7}%`,
     textAlign: "center",
-    fontSize: 12,
-    fontWeight: "700",
+    fontSize: 13,
+    fontWeight: "600",
+    color: "#94A3B8",
+    marginBottom: 4,
   },
   dayCell: {
-    width: `${(100 - 6 * 6) / 5}%`,
-    aspectRatio: 1,
+    width: `${(100 - 6 * 6) / 7}%`,
+    minHeight: 45,
     alignItems: "center",
     justifyContent: "center",
     borderRadius: 8,
-    backgroundColor: "#F3F4F6",
-    marginVertical: 4,
+    backgroundColor: "rgba(248, 250, 252, 0.1)",
+    marginVertical: 2,
+    borderWidth: 1,
+    borderColor: "rgba(148, 163, 184, 0.2)",
+    paddingVertical: 4,
+    paddingHorizontal: 2,
   },
   dayCellEmpty: {
-    width: `${(100 - 6 * 6) / 5}%`,
-    aspectRatio: 1,
+    width: `${(100 - 6 * 6) / 7}%`,
+    minHeight: 45,
     alignItems: "center",
     justifyContent: "center",
-    marginVertical: 4,
+    marginVertical: 2,
   },
-  daySelected: { backgroundColor: "#DBEAFE" },
-  dayNum: { fontSize: 12, fontWeight: "700" },
-  dayTotal: { fontSize: 10, marginTop: 2 },
+  daySelected: {
+    backgroundColor: "#8B5CF6",
+    borderColor: "#A78BFA",
+  },
+  dayNum: {
+    fontSize: 13,
+    fontWeight: "500",
+    color: "#F8FAFC",
+    lineHeight: 16,
+  },
+  dayTotal: {
+    fontSize: 8,
+    marginTop: 1,
+    fontWeight: "400",
+    color: "#CBD5E1",
+    lineHeight: 10,
+  },
 
   suggestionsBox: {
-    borderWidth: 1,
-    borderColor: "#D1D5DB",
-    borderRadius: 8,
-    marginTop: 6,
-    marginBottom: 6,
+    borderRadius: 12,
+    marginTop: 8,
+    marginBottom: 8,
     overflow: "hidden",
+    backgroundColor: "rgba(107, 114, 128, 0.1)",
   },
   suggestionItem: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    backgroundColor: "#FFFFFF",
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "transparent",
   },
-  suggestionText: { fontSize: 14, color: "#111827" },
+  suggestionText: { fontSize: 14, fontWeight: "400" },
 
   mealRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 16,
-    marginVertical: 6,
+    marginHorizontal: 20,
+    marginVertical: 4,
     borderRadius: 12,
-    padding: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 5,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 1,
+    padding: 16,
+    backgroundColor: "rgba(107, 114, 128, 0.05)",
   },
-  mealName: { fontSize: 16, fontWeight: "700" },
-  mealCalories: { marginTop: 2 },
+  mealName: { fontSize: 16, fontWeight: "400" },
+  mealCalories: { marginTop: 2, fontSize: 13, opacity: 0.7 },
   deleteBtn: {
     paddingHorizontal: 14,
     paddingVertical: 8,
