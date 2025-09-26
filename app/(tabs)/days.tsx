@@ -17,6 +17,34 @@ const formatTime = (time24: string): string => {
   return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
 };
 
+// Helper function to format date relatively
+const formatRelativeDate = (dateKey: string): string => {
+  const today = new Date();
+  const targetDate = new Date(dateKey);
+
+  // Reset time to start of day for accurate comparison
+  today.setHours(0, 0, 0, 0);
+  targetDate.setHours(0, 0, 0, 0);
+
+  const diffTime = today.getTime() - targetDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return "Today";
+  } else if (diffDays === 1) {
+    return "Yesterday";
+  } else if (diffDays <= 30) {
+    return `${diffDays} days ago`;
+  } else {
+    // For dates older than 1 month, show the actual date
+    return targetDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+};
+
 const STORAGE_KEY = "MEALS_BY_DATE_V1";
 
 function formatDateKey(d: Date) {
@@ -107,7 +135,9 @@ export default function DaysScreen() {
     return (
       <ThemedView style={styles.card}>
         <ThemedView style={styles.cardHeader}>
-          <ThemedText style={styles.cardDate}>{dateKey}</ThemedText>
+          <ThemedText style={styles.cardDate}>
+            {formatRelativeDate(dateKey)}
+          </ThemedText>
           <ThemedText style={styles.cardTotal}>{total} kcal</ThemedText>
         </ThemedView>
         {meals.length === 0 ? (
@@ -150,7 +180,12 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   cardDate: { fontSize: 18, fontWeight: "400", backgroundColor: "transparent" },
-  cardTotal: { fontSize: 16, fontWeight: "300", opacity: 0.8, backgroundColor: "transparent" },
+  cardTotal: {
+    fontSize: 16,
+    fontWeight: "300",
+    opacity: 0.8,
+    backgroundColor: "transparent",
+  },
   mealsList: { gap: 6, backgroundColor: "transparent" },
   mealRow: {
     flexDirection: "row",
