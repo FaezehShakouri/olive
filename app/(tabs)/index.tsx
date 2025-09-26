@@ -66,6 +66,7 @@ export default function CaloriesScreen() {
   const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
+  const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [totalsByDate, setTotalsByDate] = useState<Record<string, number>>({});
   const [calorieGoal, setCalorieGoal] = useState<number>(2000);
@@ -499,52 +500,6 @@ export default function CaloriesScreen() {
               </ThemedView>
             </ThemedView>
 
-            <ThemedView style={styles.inputCard}>
-              <TextInput
-                placeholder="Meal name (e.g., Chicken salad)"
-                value={mealName}
-                onChangeText={(t) => {
-                  setMealName(t);
-                  setShowSuggestions(true);
-                }}
-                style={styles.input}
-                returnKeyType="next"
-                placeholderTextColor="#6B7280"
-              />
-              {showSuggestions && nameSuggestions.length > 0 && (
-                <ThemedView style={styles.suggestionsBox}>
-                  {nameSuggestions.map((s) => (
-                    <TouchableOpacity
-                      key={s}
-                      style={styles.suggestionItem}
-                      onPress={() => {
-                        setMealName(s);
-                        setShowSuggestions(false);
-                      }}
-                    >
-                      <ThemedText style={styles.suggestionText}>{s}</ThemedText>
-                    </TouchableOpacity>
-                  ))}
-                </ThemedView>
-              )}
-              <TextInput
-                placeholder="Calories (e.g., 450)"
-                value={mealCalories}
-                onChangeText={setMealCalories}
-                keyboardType="numeric"
-                style={styles.input}
-                returnKeyType="done"
-                placeholderTextColor="#6B7280"
-              />
-              <TouchableOpacity
-                style={[styles.addBtn, !canAdd && { opacity: 0.5 }]}
-                onPress={onAddMeal}
-                disabled={!canAdd}
-              >
-                <ThemedText style={styles.addBtnText}>Add Meal</ThemedText>
-              </TouchableOpacity>
-            </ThemedView>
-
             <ThemedView style={{ flex: 1 }}>
               <FlatList
                 data={todaysMeals}
@@ -680,6 +635,123 @@ export default function CaloriesScreen() {
                           })}
                         </ThemedView>
                       ))}
+                    </ThemedView>
+                  </TouchableWithoutFeedback>
+                </ThemedView>
+              </TouchableWithoutFeedback>
+            </Modal>
+
+            {/* Floating Action Button */}
+            <TouchableOpacity
+              style={styles.fab}
+              onPress={() => setShowAddModal(true)}
+              activeOpacity={0.8}
+            >
+              <ThemedText style={styles.fabIcon}>+</ThemedText>
+            </TouchableOpacity>
+
+            {/* Add Meal Modal */}
+            <Modal
+              visible={showAddModal}
+              transparent={true}
+              animationType="slide"
+              onRequestClose={() => {
+                setShowAddModal(false);
+                setMealName("");
+                setMealCalories("");
+                setShowSuggestions(false);
+              }}
+            >
+              <TouchableWithoutFeedback
+                onPress={() => {
+                  setShowAddModal(false);
+                  setMealName("");
+                  setMealCalories("");
+                  setShowSuggestions(false);
+                }}
+              >
+                <ThemedView style={styles.modalOverlay}>
+                  <TouchableWithoutFeedback onPress={() => {}}>
+                    <ThemedView style={styles.addModalCard}>
+                      <ThemedText style={styles.addModalTitle}>
+                        Add Meal
+                      </ThemedText>
+
+                      <TextInput
+                        placeholder="Meal name (e.g., Chicken salad)"
+                        value={mealName}
+                        onChangeText={(t) => {
+                          setMealName(t);
+                          setShowSuggestions(true);
+                        }}
+                        style={styles.modalInput}
+                        returnKeyType="next"
+                        placeholderTextColor="#6B7280"
+                        autoFocus={true}
+                      />
+
+                      {showSuggestions && nameSuggestions.length > 0 && (
+                        <ThemedView style={styles.modalSuggestions}>
+                          {nameSuggestions.map((s) => (
+                            <TouchableOpacity
+                              key={s}
+                              style={styles.modalSuggestionItem}
+                              onPress={() => {
+                                setMealName(s);
+                                setShowSuggestions(false);
+                              }}
+                            >
+                              <ThemedText style={styles.suggestionText}>
+                                {s}
+                              </ThemedText>
+                            </TouchableOpacity>
+                          ))}
+                        </ThemedView>
+                      )}
+
+                      <TextInput
+                        placeholder="Calories (e.g., 450)"
+                        value={mealCalories}
+                        onChangeText={setMealCalories}
+                        keyboardType="numeric"
+                        style={styles.modalInput}
+                        returnKeyType="done"
+                        placeholderTextColor="#6B7280"
+                      />
+
+                      <ThemedView style={styles.modalButtons}>
+                        <TouchableOpacity
+                          style={styles.modalCancelBtn}
+                          onPress={() => {
+                            setShowAddModal(false);
+                            setMealName("");
+                            setMealCalories("");
+                            setShowSuggestions(false);
+                          }}
+                        >
+                          <ThemedText style={styles.modalCancelText}>
+                            Cancel
+                          </ThemedText>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[
+                            styles.modalAddBtn,
+                            !canAdd && { opacity: 0.5 },
+                          ]}
+                          onPress={async () => {
+                            await onAddMeal();
+                            setShowAddModal(false);
+                            setMealName("");
+                            setMealCalories("");
+                            setShowSuggestions(false);
+                          }}
+                          disabled={!canAdd}
+                        >
+                          <ThemedText style={styles.modalAddText}>
+                            Add Meal
+                          </ThemedText>
+                        </TouchableOpacity>
+                      </ThemedView>
                     </ThemedView>
                   </TouchableWithoutFeedback>
                 </ThemedView>
@@ -994,4 +1066,111 @@ const styles = StyleSheet.create({
   deleteBtnText: { color: "#EF4444", fontWeight: "700" },
 
   emptyText: { textAlign: "center" },
+
+  // Floating Action Button
+  fab: {
+    position: "absolute",
+    bottom: 32,
+    right: 24,
+    width: 56,
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: "rgba(107, 142, 35, 0.9)",
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 8,
+    shadowColor: "rgba(107, 142, 35, 0.4)",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.6,
+    shadowRadius: 8,
+  },
+  fabIcon: {
+    fontSize: 28,
+    fontWeight: "200",
+    color: "#FFFFFF",
+    lineHeight: 28,
+    textAlign: "center",
+  },
+
+  // Add Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.75)",
+    justifyContent: "flex-end",
+  },
+  addModalCard: {
+    backgroundColor: "rgba(31, 41, 55, 0.95)",
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingTop: 12,
+    paddingBottom: 32,
+    paddingHorizontal: 24,
+    minHeight: "50%",
+    maxHeight: "85%",
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.3)",
+    borderBottomWidth: 0,
+  },
+  addModalTitle: {
+    fontSize: 22,
+    fontWeight: "500",
+    textAlign: "center",
+    marginTop: 8,
+    marginBottom: 24,
+    color: "#F9FAFB",
+  },
+  modalInput: {
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.3)",
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    marginBottom: 16,
+    backgroundColor: "rgba(156, 175, 136, 0.12)",
+    fontWeight: "400",
+    color: "#F9FAFB",
+  },
+  modalSuggestions: {
+    borderRadius: 12,
+    marginBottom: 16,
+    maxHeight: 140,
+    backgroundColor: "rgba(156, 175, 136, 0.08)",
+    overflow: "hidden",
+  },
+  modalSuggestionItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: "transparent",
+  },
+  modalButtons: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 20,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: "rgba(156, 175, 136, 0.15)",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.2)",
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: "500",
+    opacity: 0.8,
+  },
+  modalAddBtn: {
+    flex: 1,
+    paddingVertical: 16,
+    borderRadius: 12,
+    backgroundColor: "#6B8E23",
+    alignItems: "center",
+  },
+  modalAddText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "#FFFFFF",
+  },
 });
