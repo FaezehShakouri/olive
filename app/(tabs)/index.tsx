@@ -287,7 +287,7 @@ export default function CaloriesScreen() {
     <ThemedView style={styles.mealRow} darkColor="#333333">
       {editingId === item.id ? (
         <>
-          <ThemedView style={{ flex: 1, gap: 6 }} darkColor="#333333">
+          <ThemedView style={{ flex: 1, gap: 6 }} darkColor="transparent">
             <TextInput
               value={editName}
               onChangeText={setEditName}
@@ -311,7 +311,7 @@ export default function CaloriesScreen() {
               gap: 8,
               marginLeft: 8,
             }}
-            darkColor="#333333"
+            darkColor="transparent"
           >
             <TouchableOpacity
               style={styles.iconBtnConfirm}
@@ -441,7 +441,7 @@ export default function CaloriesScreen() {
                           inputRange: [0, 0.3, 0.6, 0.85, 1, 1.2],
                           outputRange: [
                             "#94A3B8", // Cool gray - very low
-                            "#A3A3A3", // Warm gray - low  
+                            "#A3A3A3", // Warm gray - low
                             "#D4AF37", // Golden - medium
                             "#9CAF88", // Sage green - good
                             "#6B8E23", // Olive green - goal reached
@@ -673,7 +673,13 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   dateText: { fontSize: 20, fontWeight: "500" },
-  todayText: { marginTop: 4, fontWeight: "400", fontSize: 12, opacity: 0.7, color: "#6B8E23" },
+  todayText: {
+    marginTop: 4,
+    fontWeight: "400",
+    fontSize: 12,
+    opacity: 0.7,
+    color: "#6B8E23",
+  },
 
   totalBox: {
     marginHorizontal: 20,
@@ -823,7 +829,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginVertical: 2,
   },
-  daySelected: { 
+  daySelected: {
     backgroundColor: "#6B8E23",
     borderColor: "#9CAF88",
   },
