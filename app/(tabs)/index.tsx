@@ -25,6 +25,11 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
 } from "react-native";
+import {
+  GestureHandlerRootView,
+  PanGestureHandler,
+  State,
+} from "react-native-gesture-handler";
 
 const STORAGE_KEY = "MEALS_BY_DATE_V1";
 
@@ -200,6 +205,31 @@ export default function CaloriesScreen() {
 
   const goToday = () => setCurrentDate(new Date());
 
+  // Swipe gesture handler
+  const onGestureStateChange = (event: any) => {
+    const { state, translationX, velocityX } = event.nativeEvent;
+
+    if (state === State.END) {
+      const threshold = 75; // Minimum swipe distance
+      const velocityThreshold = 500; // Minimum swipe velocity
+
+      // Check if swipe is significant enough (distance or velocity)
+      const isSignificantSwipe =
+        Math.abs(translationX) > threshold ||
+        Math.abs(velocityX) > velocityThreshold;
+
+      if (isSignificantSwipe) {
+        if (translationX > 0 || velocityX > 0) {
+          // Swipe right - go to previous day
+          setCurrentDate((d) => addDays(d, -1));
+        } else {
+          // Swipe left - go to next day
+          setCurrentDate((d) => addDays(d, 1));
+        }
+      }
+    }
+  };
+
   // Calendar helpers
   const startOfMonth = (d: Date) => new Date(d.getFullYear(), d.getMonth(), 1);
   const endOfMonth = (d: Date) =>
@@ -314,234 +344,264 @@ export default function CaloriesScreen() {
   const canAdd = mealName.trim().length > 0 && Number(mealCalories) > 0;
 
   return (
-    <ThemedSafeAreaView style={{ flex: 1 }}>
-      <KeyboardAvoidingView
-        behavior={Platform.OS === "ios" ? "padding" : "height"}
-        style={{ flex: 1 }}
-      >
-        <ThemedView style={styles.header}>
-          <TouchableOpacity
-            style={styles.navBtn}
-            onPress={() => setCurrentDate((d) => addDays(d, -1))}
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemedSafeAreaView style={{ flex: 1 }}>
+        <PanGestureHandler
+          onHandlerStateChange={onGestureStateChange}
+          minPointers={1}
+          maxPointers={1}
+          shouldCancelWhenOutside={false}
+        >
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : "height"}
+            style={{ flex: 1 }}
           >
-            <ThemedText style={styles.navBtnText} darkColor="#333333">
-              {"‹"}
-            </ThemedText>
-          </TouchableOpacity>
-          <ThemedView style={styles.dateBox}>
-            <ThemedView style={styles.dateRow}>
-              <ThemedText style={styles.dateText}>{dateKey}</ThemedText>
+            <ThemedView style={styles.header}>
               <TouchableOpacity
-                onPress={async () => {
-                  setCalendarMonth(
-                    new Date(
-                      currentDate.getFullYear(),
-                      currentDate.getMonth(),
-                      1
-                    )
-                  );
-                  try {
-                    const { getTotalsByDate } = await import("@/lib/db");
-                    const totals = await getTotalsByDate();
-                    setTotalsByDate(totals);
-                  } catch {}
-                  setShowCalendar(true);
-                }}
-                style={styles.calendarBtn}
+                style={styles.navBtn}
+                onPress={() => setCurrentDate((d) => addDays(d, -1))}
               >
-                <IconSymbol name="calendar" size={18} color="#A1CEDC" />
+                <ThemedText style={styles.navBtnText} darkColor="#333333">
+                  {"‹"}
+                </ThemedText>
+              </TouchableOpacity>
+              <ThemedView style={styles.dateBox}>
+                <ThemedView style={styles.dateRow}>
+                  <ThemedText style={styles.dateText}>{dateKey}</ThemedText>
+                  <TouchableOpacity
+                    onPress={async () => {
+                      setCalendarMonth(
+                        new Date(
+                          currentDate.getFullYear(),
+                          currentDate.getMonth(),
+                          1
+                        )
+                      );
+                      try {
+                        const { getTotalsByDate } = await import("@/lib/db");
+                        const totals = await getTotalsByDate();
+                        setTotalsByDate(totals);
+                      } catch {}
+                      setShowCalendar(true);
+                    }}
+                    style={styles.calendarBtn}
+                  >
+                    <IconSymbol name="calendar" size={18} color="#A1CEDC" />
+                  </TouchableOpacity>
+                </ThemedView>
+                <TouchableOpacity onPress={goToday}>
+                  <ThemedText style={styles.todayText} darkColor="#A1CEDC">
+                    Today
+                  </ThemedText>
+                </TouchableOpacity>
+              </ThemedView>
+              <TouchableOpacity
+                style={styles.navBtn}
+                onPress={() => setCurrentDate((d) => addDays(d, 1))}
+              >
+                <ThemedText style={styles.navBtnText} darkColor="#333333">
+                  {"›"}
+                </ThemedText>
               </TouchableOpacity>
             </ThemedView>
-            <TouchableOpacity onPress={goToday}>
-              <ThemedText style={styles.todayText} darkColor="#A1CEDC">
-                Today
+
+            <ThemedView style={styles.totalBox} darkColor="#333333">
+              <ThemedText style={styles.totalLabel}>Total</ThemedText>
+              <ThemedText style={styles.totalValue}>
+                {displayTotal} kcal
               </ThemedText>
-            </TouchableOpacity>
-          </ThemedView>
-          <TouchableOpacity
-            style={styles.navBtn}
-            onPress={() => setCurrentDate((d) => addDays(d, 1))}
-          >
-            <ThemedText style={styles.navBtnText} darkColor="#333333">
-              {"›"}
-            </ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
-
-        <ThemedView style={styles.totalBox} darkColor="#333333">
-          <ThemedText style={styles.totalLabel}>Total</ThemedText>
-          <ThemedText style={styles.totalValue}>{displayTotal} kcal</ThemedText>
-        </ThemedView>
-
-        <ThemedView style={styles.inputCard}>
-          <TextInput
-            placeholder="Meal name (e.g., Chicken salad)"
-            value={mealName}
-            onChangeText={(t) => {
-              setMealName(t);
-              setShowSuggestions(true);
-            }}
-            style={styles.input}
-            returnKeyType="next"
-            placeholderTextColor="#6B7280"
-          />
-          {showSuggestions && nameSuggestions.length > 0 && (
-            <ThemedView style={styles.suggestionsBox} darkColor="#222222">
-              {nameSuggestions.map((s) => (
-                <TouchableOpacity
-                  key={s}
-                  style={styles.suggestionItem}
-                  onPress={() => {
-                    setMealName(s);
-                    setShowSuggestions(false);
-                  }}
-                >
-                  <ThemedText style={styles.suggestionText}>{s}</ThemedText>
-                </TouchableOpacity>
-              ))}
             </ThemedView>
-          )}
-          <TextInput
-            placeholder="Calories (e.g., 450)"
-            value={mealCalories}
-            onChangeText={setMealCalories}
-            keyboardType="numeric"
-            style={styles.input}
-            returnKeyType="done"
-            placeholderTextColor="#6B7280"
-          />
-          <TouchableOpacity
-            style={[styles.addBtn, !canAdd && { opacity: 0.5 }]}
-            onPress={onAddMeal}
-            disabled={!canAdd}
-          >
-            <ThemedText style={styles.addBtnText}>Add Meal</ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
 
-        <FlatList
-          data={todaysMeals}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={
-            todaysMeals.length === 0 && { flex: 1, justifyContent: "center" }
-          }
-          ListEmptyComponent={
-            <ThemedText style={styles.emptyText}>
-              No meals yet. Add your first meal for {dateKey}.
-            </ThemedText>
-          }
-          style={{ flex: 1 }}
-        />
-        <ConfirmDialog
-          visible={pendingDeleteId !== null}
-          title="Delete meal"
-          message="Are you sure you want to delete this meal?"
-          confirmText="Delete"
-          cancelText="Cancel"
-          onCancel={() => setPendingDeleteId(null)}
-          onConfirm={async () => {
-            if (!pendingDeleteId) return;
-            await onDeleteMeal(pendingDeleteId);
-            setPendingDeleteId(null);
-          }}
-        />
-        {/* Calendar Modal */}
-        <Modal
-          visible={showCalendar}
-          transparent
-          animationType="fade"
-          onRequestClose={() => setShowCalendar(false)}
-        >
-          <TouchableWithoutFeedback onPress={() => setShowCalendar(false)}>
-            <ThemedView style={styles.modalBackdrop}>
-              <TouchableWithoutFeedback>
-                <ThemedView style={styles.calendarCard} darkColor="#111827">
-                  <ThemedView style={styles.calendarHeader} darkColor="#111827">
+            <ThemedView style={styles.inputCard}>
+              <TextInput
+                placeholder="Meal name (e.g., Chicken salad)"
+                value={mealName}
+                onChangeText={(t) => {
+                  setMealName(t);
+                  setShowSuggestions(true);
+                }}
+                style={styles.input}
+                returnKeyType="next"
+                placeholderTextColor="#6B7280"
+              />
+              {showSuggestions && nameSuggestions.length > 0 && (
+                <ThemedView style={styles.suggestionsBox} darkColor="#222222">
+                  {nameSuggestions.map((s) => (
                     <TouchableOpacity
-                      onPress={() => setCalendarMonth((d) => addMonths(d, -1))}
-                      style={styles.navBtnSm}
+                      key={s}
+                      style={styles.suggestionItem}
+                      onPress={() => {
+                        setMealName(s);
+                        setShowSuggestions(false);
+                      }}
                     >
-                      <ThemedText style={styles.navBtnText} darkColor="#333333">
-                        {"‹"}
-                      </ThemedText>
+                      <ThemedText style={styles.suggestionText}>{s}</ThemedText>
                     </TouchableOpacity>
-                    <ThemedText style={styles.monthTitle}>
-                      {calendarMonth.getFullYear()}-
-                      {String(calendarMonth.getMonth() + 1).padStart(2, "0")}
-                    </ThemedText>
-                    <TouchableOpacity
-                      onPress={() => setCalendarMonth((d) => addMonths(d, 1))}
-                      style={styles.navBtnSm}
-                    >
-                      <ThemedText style={styles.navBtnText} darkColor="#333333">
-                        {"›"}
-                      </ThemedText>
-                    </TouchableOpacity>
-                  </ThemedView>
-                  <ThemedView style={styles.weekRow} darkColor="#111827">
-                    {weekdayLabels.map((w) => (
-                      <ThemedText key={w} style={styles.weekday}>
-                        {w}
-                      </ThemedText>
-                    ))}
-                  </ThemedView>
-                  {monthDays.map((week, i) => (
-                    <ThemedView
-                      key={i}
-                      style={styles.weekRowDays}
-                      darkColor="#111827"
-                    >
-                      {week.map(({ date, key }) => {
-                        if (!date)
-                          return (
-                            <ThemedView
-                              key={key}
-                              style={styles.dayCellEmpty}
-                              darkColor="#111827"
-                            />
-                          );
-                        const k = formatDateKey(date);
-                        const total = totalsByDate[k] ?? 0;
-                        const isSelected = k === formatDateKey(currentDate);
-                        return (
-                          <TouchableOpacity
-                            key={key}
-                            style={[
-                              styles.dayCell,
-                              isSelected && styles.daySelected,
-                            ]}
-                            onPress={() => {
-                              setCurrentDate(date);
-                              setShowCalendar(false);
-                            }}
-                          >
-                            <ThemedText
-                              style={styles.dayNum}
-                              darkColor="#111827"
-                            >
-                              {date.getDate()}
-                            </ThemedText>
-                            {total > 0 && (
-                              <ThemedText
-                                style={styles.dayTotal}
-                                darkColor="#111827"
-                              >
-                                {total}
-                              </ThemedText>
-                            )}
-                          </TouchableOpacity>
-                        );
-                      })}
-                    </ThemedView>
                   ))}
                 </ThemedView>
-              </TouchableWithoutFeedback>
+              )}
+              <TextInput
+                placeholder="Calories (e.g., 450)"
+                value={mealCalories}
+                onChangeText={setMealCalories}
+                keyboardType="numeric"
+                style={styles.input}
+                returnKeyType="done"
+                placeholderTextColor="#6B7280"
+              />
+              <TouchableOpacity
+                style={[styles.addBtn, !canAdd && { opacity: 0.5 }]}
+                onPress={onAddMeal}
+                disabled={!canAdd}
+              >
+                <ThemedText style={styles.addBtnText}>Add Meal</ThemedText>
+              </TouchableOpacity>
             </ThemedView>
-          </TouchableWithoutFeedback>
-        </Modal>
-      </KeyboardAvoidingView>
-    </ThemedSafeAreaView>
+
+            <FlatList
+              data={todaysMeals}
+              keyExtractor={(item) => item.id}
+              renderItem={renderItem}
+              contentContainerStyle={
+                todaysMeals.length === 0 && {
+                  flex: 1,
+                  justifyContent: "center",
+                }
+              }
+              ListEmptyComponent={
+                <ThemedText style={styles.emptyText}>
+                  No meals yet. Add your first meal for {dateKey}.
+                </ThemedText>
+              }
+              style={{ flex: 1 }}
+            />
+            <ConfirmDialog
+              visible={pendingDeleteId !== null}
+              title="Delete meal"
+              message="Are you sure you want to delete this meal?"
+              confirmText="Delete"
+              cancelText="Cancel"
+              onCancel={() => setPendingDeleteId(null)}
+              onConfirm={async () => {
+                if (!pendingDeleteId) return;
+                await onDeleteMeal(pendingDeleteId);
+                setPendingDeleteId(null);
+              }}
+            />
+            {/* Calendar Modal */}
+            <Modal
+              visible={showCalendar}
+              transparent
+              animationType="fade"
+              onRequestClose={() => setShowCalendar(false)}
+            >
+              <TouchableWithoutFeedback onPress={() => setShowCalendar(false)}>
+                <ThemedView style={styles.modalBackdrop}>
+                  <TouchableWithoutFeedback>
+                    <ThemedView style={styles.calendarCard} darkColor="#111827">
+                      <ThemedView
+                        style={styles.calendarHeader}
+                        darkColor="#111827"
+                      >
+                        <TouchableOpacity
+                          onPress={() =>
+                            setCalendarMonth((d) => addMonths(d, -1))
+                          }
+                          style={styles.navBtnSm}
+                        >
+                          <ThemedText
+                            style={styles.navBtnText}
+                            darkColor="#333333"
+                          >
+                            {"‹"}
+                          </ThemedText>
+                        </TouchableOpacity>
+                        <ThemedText style={styles.monthTitle}>
+                          {calendarMonth.getFullYear()}-
+                          {String(calendarMonth.getMonth() + 1).padStart(
+                            2,
+                            "0"
+                          )}
+                        </ThemedText>
+                        <TouchableOpacity
+                          onPress={() =>
+                            setCalendarMonth((d) => addMonths(d, 1))
+                          }
+                          style={styles.navBtnSm}
+                        >
+                          <ThemedText
+                            style={styles.navBtnText}
+                            darkColor="#333333"
+                          >
+                            {"›"}
+                          </ThemedText>
+                        </TouchableOpacity>
+                      </ThemedView>
+                      <ThemedView style={styles.weekRow} darkColor="#111827">
+                        {weekdayLabels.map((w) => (
+                          <ThemedText key={w} style={styles.weekday}>
+                            {w}
+                          </ThemedText>
+                        ))}
+                      </ThemedView>
+                      {monthDays.map((week, i) => (
+                        <ThemedView
+                          key={i}
+                          style={styles.weekRowDays}
+                          darkColor="#111827"
+                        >
+                          {week.map(({ date, key }) => {
+                            if (!date)
+                              return (
+                                <ThemedView
+                                  key={key}
+                                  style={styles.dayCellEmpty}
+                                  darkColor="#111827"
+                                />
+                              );
+                            const k = formatDateKey(date);
+                            const total = totalsByDate[k] ?? 0;
+                            const isSelected = k === formatDateKey(currentDate);
+                            return (
+                              <TouchableOpacity
+                                key={key}
+                                style={[
+                                  styles.dayCell,
+                                  isSelected && styles.daySelected,
+                                ]}
+                                onPress={() => {
+                                  setCurrentDate(date);
+                                  setShowCalendar(false);
+                                }}
+                              >
+                                <ThemedText
+                                  style={styles.dayNum}
+                                  darkColor="#111827"
+                                >
+                                  {date.getDate()}
+                                </ThemedText>
+                                {total > 0 && (
+                                  <ThemedText
+                                    style={styles.dayTotal}
+                                    darkColor="#111827"
+                                  >
+                                    {total}
+                                  </ThemedText>
+                                )}
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </ThemedView>
+                      ))}
+                    </ThemedView>
+                  </TouchableWithoutFeedback>
+                </ThemedView>
+              </TouchableWithoutFeedback>
+            </Modal>
+          </KeyboardAvoidingView>
+        </PanGestureHandler>
+      </ThemedSafeAreaView>
+    </GestureHandlerRootView>
   );
 }
 
