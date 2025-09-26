@@ -545,11 +545,6 @@ export default function CaloriesScreen() {
                     ? { flex: 1, justifyContent: "center" }
                     : { paddingBottom: 20 }
                 }
-                ListEmptyComponent={
-                  <ThemedText style={styles.emptyText}>
-                    No meals yet. Add your first meal for {dateKey}.
-                  </ThemedText>
-                }
                 style={{ flex: 1 }}
                 showsVerticalScrollIndicator={true}
                 bounces={true}
