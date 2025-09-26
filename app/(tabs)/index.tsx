@@ -662,100 +662,106 @@ export default function CaloriesScreen() {
                 setShowSuggestions(false);
               }}
             >
-              <TouchableWithoutFeedback
-                onPress={() => {
-                  setShowAddModal(false);
-                  setMealName("");
-                  setMealCalories("");
-                  setShowSuggestions(false);
-                }}
+              <KeyboardAvoidingView
+                style={styles.modalOverlay}
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 20}
               >
-                <ThemedView style={styles.modalOverlay}>
-                  <TouchableWithoutFeedback onPress={() => {}}>
-                    <ThemedView style={styles.addModalCard}>
-                      <ThemedText style={styles.addModalTitle}>
-                        Add Meal
-                      </ThemedText>
+                <TouchableWithoutFeedback
+                  onPress={() => {
+                    setShowAddModal(false);
+                    setMealName("");
+                    setMealCalories("");
+                    setShowSuggestions(false);
+                  }}
+                >
+                  <ThemedView style={styles.modalOverlay}>
+                    <TouchableWithoutFeedback onPress={() => {}}>
+                      <ThemedView style={styles.addModalCard}>
+                        <ThemedText style={styles.addModalTitle}>
+                          Add Meal
+                        </ThemedText>
 
-                      <TextInput
-                        placeholder="Meal name (e.g., Chicken salad)"
-                        value={mealName}
-                        onChangeText={(t) => {
-                          setMealName(t);
-                          setShowSuggestions(true);
-                        }}
-                        style={styles.modalInput}
-                        returnKeyType="next"
-                        placeholderTextColor="#6B7280"
-                        autoFocus={true}
-                      />
+                        <TextInput
+                          placeholder="Meal name (e.g., Chicken salad)"
+                          value={mealName}
+                          onChangeText={(t) => {
+                            setMealName(t);
+                            setShowSuggestions(true);
+                          }}
+                          style={styles.modalInput}
+                          returnKeyType="next"
+                          placeholderTextColor="#6B7280"
+                          autoFocus={true}
+                        />
 
-                      {showSuggestions && nameSuggestions.length > 0 && (
-                        <ThemedView style={styles.modalSuggestions}>
-                          {nameSuggestions.map((s) => (
-                            <TouchableOpacity
-                              key={s}
-                              style={styles.modalSuggestionItem}
-                              onPress={() => {
-                                setMealName(s);
-                                setShowSuggestions(false);
-                              }}
-                            >
-                              <ThemedText style={styles.suggestionText}>
-                                {s}
-                              </ThemedText>
-                            </TouchableOpacity>
-                          ))}
+                        {showSuggestions && nameSuggestions.length > 0 && (
+                          <ThemedView style={styles.modalSuggestions}>
+                            {nameSuggestions.map((s) => (
+                              <TouchableOpacity
+                                key={s}
+                                style={styles.modalSuggestionItem}
+                                onPress={() => {
+                                  setMealName(s);
+                                  setShowSuggestions(false);
+                                }}
+                              >
+                                <ThemedText style={styles.suggestionText}>
+                                  {s}
+                                </ThemedText>
+                              </TouchableOpacity>
+                            ))}
+                          </ThemedView>
+                        )}
+
+                        <TextInput
+                          placeholder="Calories (e.g., 450)"
+                          value={mealCalories}
+                          onChangeText={setMealCalories}
+                          keyboardType="numeric"
+                          style={styles.modalInput}
+                          returnKeyType="done"
+                          placeholderTextColor="#6B7280"
+                        />
+
+                        <ThemedView style={styles.modalButtons}>
+                          <TouchableOpacity
+                            style={styles.modalCancelBtn}
+                            onPress={() => {
+                              setShowAddModal(false);
+                              setMealName("");
+                              setMealCalories("");
+                              setShowSuggestions(false);
+                            }}
+                          >
+                            <ThemedText style={styles.modalCancelText}>
+                              Cancel
+                            </ThemedText>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[
+                              styles.modalAddBtn,
+                              !canAdd && { opacity: 0.5 },
+                            ]}
+                            onPress={async () => {
+                              await onAddMeal();
+                              setShowAddModal(false);
+                              setMealName("");
+                              setMealCalories("");
+                              setShowSuggestions(false);
+                            }}
+                            disabled={!canAdd}
+                          >
+                            <ThemedText style={styles.modalAddText}>
+                              Add Meal
+                            </ThemedText>
+                          </TouchableOpacity>
                         </ThemedView>
-                      )}
-
-                      <TextInput
-                        placeholder="Calories (e.g., 450)"
-                        value={mealCalories}
-                        onChangeText={setMealCalories}
-                        keyboardType="numeric"
-                        style={styles.modalInput}
-                        returnKeyType="done"
-                        placeholderTextColor="#6B7280"
-                      />
-
-                      <ThemedView style={styles.modalButtons}>
-                        <TouchableOpacity
-                          style={styles.modalCancelBtn}
-                          onPress={() => {
-                            setShowAddModal(false);
-                            setMealName("");
-                            setMealCalories("");
-                            setShowSuggestions(false);
-                          }}
-                        >
-                          <ThemedText style={styles.modalCancelText}>
-                            Cancel
-                          </ThemedText>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[
-                            styles.modalAddBtn,
-                            !canAdd && { opacity: 0.5 },
-                          ]}
-                          onPress={async () => {
-                            await onAddMeal();
-                            setShowAddModal(false);
-                            setMealName("");
-                            setMealCalories("");
-                            setShowSuggestions(false);
-                          }}
-                          disabled={!canAdd}
-                        >
-                          <ThemedText style={styles.modalAddText}>
-                            Add Meal
-                          </ThemedText>
-                        </TouchableOpacity>
                       </ThemedView>
-                    </ThemedView>
-                  </TouchableWithoutFeedback>
-                </ThemedView>
-              </TouchableWithoutFeedback>
+                    </TouchableWithoutFeedback>
+                  </ThemedView>
+                </TouchableWithoutFeedback>
+              </KeyboardAvoidingView>
             </Modal>
           </KeyboardAvoidingView>
         </PanGestureHandler>
@@ -1106,7 +1112,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
     paddingHorizontal: 24,
     minHeight: "50%",
-    maxHeight: "85%",
+    maxHeight: "90%",
     borderWidth: 1,
     borderColor: "rgba(107, 142, 35, 0.3)",
     borderBottomWidth: 0,
