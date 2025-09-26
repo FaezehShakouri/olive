@@ -640,7 +640,7 @@ const styles = StyleSheet.create({
   // Calendar styles
   modalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.8)",
     alignItems: "center",
     justifyContent: "center",
     padding: 16,
