@@ -1,14 +1,34 @@
 import { ThemedSafeAreaView } from "@/components/safe-area-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import { bulkUpsertMeals, clearAllMeals, ImportResult } from "@/lib/db";
+import { getThemeOverride, setThemeOverride } from "@/lib/theme";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import React, { useState } from "react";
-import { Alert, Platform, StyleSheet, TouchableOpacity } from "react-native";
+import {
+  Alert,
+  Platform,
+  StyleSheet,
+  Switch,
+  TouchableOpacity,
+} from "react-native";
 
 export default function SettingsScreen() {
   const [status, setStatus] = useState<string>("");
+  const [themeSwitch, setThemeSwitch] = useState<"light" | "dark" | null>(null);
+  const systemScheme = useColorScheme();
+
+  React.useEffect(() => {
+    (async () => {
+      const v = await getThemeOverride();
+      // If no override saved, default to system theme
+      if (v === null)
+        setThemeSwitch(systemScheme === "dark" ? "dark" : "light");
+      else setThemeSwitch(v);
+    })();
+  }, [systemScheme]);
 
   const onImport = async () => {
     setStatus("");
@@ -21,7 +41,7 @@ export default function SettingsScreen() {
       if (res.canceled || !res.assets?.[0]) return;
       const file = res.assets[0];
       const content = await FileSystem.readAsStringAsync(file.uri, {
-        encoding: 'utf8',
+        encoding: "utf8",
       });
       let data: unknown;
       try {
@@ -63,6 +83,19 @@ export default function SettingsScreen() {
   return (
     <ThemedSafeAreaView style={{ flex: 1 }}>
       <ThemedView style={styles.card} darkColor="#333333">
+        <ThemedText style={styles.title}>Appearance</ThemedText>
+        <ThemedView style={styles.row} darkColor="#333333">
+          <ThemedText style={{ flex: 1 }}>Dark mode</ThemedText>
+          <Switch
+            value={themeSwitch === "dark"}
+            onValueChange={async (v) => {
+              const next = v ? "dark" : "light"; // force explicit mode
+              setThemeSwitch(next);
+              await setThemeOverride(next);
+            }}
+          />
+        </ThemedView>
+
         <ThemedText style={styles.title}>Data Import</ThemedText>
         <ThemedText style={styles.desc}>
           Pick a JSON file with one of these formats:
@@ -110,6 +143,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   title: { fontSize: 18, fontWeight: "800" },
+  row: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
   desc: { fontSize: 14 },
   code: {
     fontFamily: Platform.select({
