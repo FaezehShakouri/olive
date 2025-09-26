@@ -498,7 +498,7 @@ export default function CaloriesScreen() {
                             <ThemedView
                               key={key}
                               style={styles.dayCellEmpty}
-                              darkColor="#333333"
+                              darkColor="#111827"
                             />
                           );
                         const k = formatDateKey(date);
