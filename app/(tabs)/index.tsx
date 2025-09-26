@@ -349,7 +349,7 @@ export default function CaloriesScreen() {
                 }}
                 style={styles.calendarBtn}
               >
-                <IconSymbol name="calendar" size={18} color="#2563EB" />
+                <IconSymbol name="calendar" size={18} color="#A1CEDC" />
               </TouchableOpacity>
             </ThemedView>
             <TouchableOpacity onPress={goToday}>
@@ -566,10 +566,8 @@ const styles = StyleSheet.create({
   dateBox: { flex: 1, alignItems: "center" },
   dateRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   calendarBtn: {
-    marginLeft: 6,
-    padding: 6,
-    borderRadius: 9999,
-    backgroundColor: "#E5E7EB",
+    marginLeft: 1,
+    padding: 1,
   },
   dateText: { fontSize: 18, fontWeight: "700" },
   todayText: { marginTop: 2, fontWeight: "600" },
