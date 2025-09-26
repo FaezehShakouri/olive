@@ -21,6 +21,7 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
+  ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -63,7 +64,9 @@ export default function CaloriesScreen() {
   const [mealsByDate, setMealsByDate] = useState<MealsByDate>({});
   const [mealName, setMealName] = useState("");
   const [mealCalories, setMealCalories] = useState("");
-  const [nameSuggestions, setNameSuggestions] = useState<string[]>([]);
+  const [nameSuggestions, setNameSuggestions] = useState<
+    { name: string; calories: number }[]
+  >([]);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
@@ -454,13 +457,10 @@ export default function CaloriesScreen() {
             </ThemedView>
 
             <ThemedView style={styles.calorieCard}>
-              <ThemedText style={styles.remainingLabel}>You can eat</ThemedText>
               <ThemedText style={styles.remainingValue}>
                 {Math.max(0, calorieGoal - totalCalories)} kcal
               </ThemedText>
-              <ThemedText style={styles.remainingSubtext}>
-                more today
-              </ThemedText>
+              <ThemedText style={styles.remainingSubtext}>Left</ThemedText>
 
               <ThemedView style={styles.statsRow} darkColor="transparent">
                 <ThemedView style={styles.statItem} darkColor="transparent">
@@ -710,20 +710,38 @@ export default function CaloriesScreen() {
 
                         {showSuggestions && nameSuggestions.length > 0 && (
                           <ThemedView style={styles.modalSuggestions}>
-                            {nameSuggestions.map((s) => (
-                              <TouchableOpacity
-                                key={s}
-                                style={styles.modalSuggestionItem}
-                                onPress={() => {
-                                  setMealName(s);
-                                  setShowSuggestions(false);
-                                }}
-                              >
-                                <ThemedText style={styles.suggestionText}>
-                                  {s}
-                                </ThemedText>
-                              </TouchableOpacity>
-                            ))}
+                            <ScrollView
+                              style={styles.suggestionsScrollView}
+                              showsVerticalScrollIndicator={true}
+                              bounces={false}
+                              keyboardShouldPersistTaps="handled"
+                            >
+                              {nameSuggestions.map((s, index) => (
+                                <TouchableOpacity
+                                  key={`${s.name}-${s.calories}-${index}`}
+                                  style={styles.modalSuggestionItem}
+                                  onPress={() => {
+                                    setMealName(s.name);
+                                    setMealCalories(s.calories.toString());
+                                    setShowSuggestions(false);
+                                  }}
+                                >
+                                  <ThemedView
+                                    style={styles.suggestionRow}
+                                    darkColor="transparent"
+                                  >
+                                    <ThemedText style={styles.suggestionText}>
+                                      {s.name}
+                                    </ThemedText>
+                                    <ThemedText
+                                      style={styles.suggestionCalories}
+                                    >
+                                      {s.calories} kcal
+                                    </ThemedText>
+                                  </ThemedView>
+                                </TouchableOpacity>
+                              ))}
+                            </ScrollView>
                           </ThemedView>
                         )}
 
@@ -1042,7 +1060,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: "transparent",
   },
-  suggestionText: { fontSize: 14, fontWeight: "400" },
 
   mealRow: {
     flexDirection: "row",
@@ -1152,14 +1169,33 @@ const styles = StyleSheet.create({
   modalSuggestions: {
     borderRadius: 12,
     marginBottom: 16,
-    maxHeight: 140,
+    maxHeight: 160,
     backgroundColor: "rgba(156, 175, 136, 0.08)",
     overflow: "hidden",
+  },
+  suggestionsScrollView: {
+    maxHeight: 160,
   },
   modalSuggestionItem: {
     paddingVertical: 12,
     paddingHorizontal: 16,
     backgroundColor: "transparent",
+  },
+  suggestionRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  suggestionText: {
+    fontSize: 14,
+    fontWeight: "400",
+    flex: 1,
+  },
+  suggestionCalories: {
+    fontSize: 12,
+    fontWeight: "300",
+    opacity: 0.7,
+    color: "#6B8E23",
   },
   modalButtons: {
     flexDirection: "row",
