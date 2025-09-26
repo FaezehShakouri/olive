@@ -104,6 +104,8 @@ export default function SettingsScreen() {
                 setThemeSwitch(next);
                 await setThemeOverride(next);
               }}
+              trackColor={{ false: "#8B7355", true: "#6B8E23" }}
+              thumbColor={themeSwitch === "dark" ? "#9CAF88" : "#D4AF37"}
             />
           </ThemedView>
         </ThemedView>
@@ -179,13 +181,13 @@ const styles = StyleSheet.create({
     textAlign: "right",
   },
   btn: {
-    backgroundColor: "#8B5CF6",
+    backgroundColor: "#6B8E23",
     borderRadius: 12,
     alignItems: "center",
     paddingVertical: 14,
   },
   danger: {
-    backgroundColor: "#64748B",
+    backgroundColor: "#8B7355",
   },
   btnText: { color: "#FFFFFF", fontWeight: "400", fontSize: 15 },
   status: { marginTop: 8, fontSize: 12, opacity: 0.8 },

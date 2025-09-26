@@ -404,7 +404,7 @@ export default function CaloriesScreen() {
                     }}
                     style={styles.calendarBtn}
                   >
-                    <IconSymbol name="calendar" size={18} color="#8B5CF6" />
+                    <IconSymbol name="calendar" size={18} color="#6B8E23" />
                   </TouchableOpacity>
                 </ThemedView>
                 <TouchableOpacity onPress={goToday}>
@@ -440,12 +440,12 @@ export default function CaloriesScreen() {
                         backgroundColor: progressAnim.interpolate({
                           inputRange: [0, 0.3, 0.6, 0.85, 1, 1.2],
                           outputRange: [
-                            "#64748B", // Slate - very low
-                            "#94A3B8", // Light slate - low
-                            "#CBD5E1", // Lighter slate - medium
-                            "#A78BFA", // Soft purple - good
-                            "#8B5CF6", // Purple - goal reached
-                            "#7C3AED", // Deep purple - exceeded
+                            "#94A3B8", // Cool gray - very low
+                            "#A3A3A3", // Warm gray - low  
+                            "#D4AF37", // Golden - medium
+                            "#9CAF88", // Sage green - good
+                            "#6B8E23", // Olive green - goal reached
+                            "#556B2F", // Dark olive - exceeded
                           ],
                           extrapolate: "clamp",
                         }),
@@ -673,7 +673,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   dateText: { fontSize: 20, fontWeight: "500" },
-  todayText: { marginTop: 4, fontWeight: "400", fontSize: 12, opacity: 0.7 },
+  todayText: { marginTop: 4, fontWeight: "400", fontSize: 12, opacity: 0.7, color: "#6B8E23" },
 
   totalBox: {
     marginHorizontal: 20,
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
     backgroundColor: "transparent",
   },
   input: {
-    backgroundColor: "rgba(107, 114, 128, 0.1)",
+    backgroundColor: "rgba(156, 175, 136, 0.12)",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -753,7 +753,7 @@ const styles = StyleSheet.create({
   },
   iconBtnConfirmText: { color: "white", fontWeight: "700" },
   addBtn: {
-    backgroundColor: "#8B5CF6",
+    backgroundColor: "#6B8E23",
     borderRadius: 12,
     alignItems: "center",
     paddingVertical: 14,
@@ -800,7 +800,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 13,
     fontWeight: "600",
-    color: "#94A3B8",
+    color: "#9CAF88",
     marginBottom: 4,
   },
   dayCell: {
@@ -823,9 +823,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginVertical: 2,
   },
-  daySelected: {
-    backgroundColor: "#8B5CF6",
-    borderColor: "#A78BFA",
+  daySelected: { 
+    backgroundColor: "#6B8E23",
+    borderColor: "#9CAF88",
   },
   dayNum: {
     fontSize: 13,
@@ -846,7 +846,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginBottom: 8,
     overflow: "hidden",
-    backgroundColor: "rgba(107, 114, 128, 0.1)",
+    backgroundColor: "rgba(156, 175, 136, 0.12)",
   },
   suggestionItem: {
     paddingVertical: 12,

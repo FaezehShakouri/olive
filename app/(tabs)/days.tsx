@@ -144,7 +144,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: "rgba(107, 114, 128, 0.05)",
+    backgroundColor: "rgba(156, 175, 136, 0.08)",
   },
   mealName: {
     fontSize: 15,
