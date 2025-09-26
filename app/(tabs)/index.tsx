@@ -47,8 +47,16 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
-type Meal = { id: string; name: string; calories: number };
+type Meal = { id: string; name: string; calories: number; time: string };
 type MealsByDate = Record<string, Meal[]>;
+
+// Helper function to format time from 24-hour to 12-hour AM/PM format
+const formatTime = (time24: string): string => {
+  const [hours, minutes] = time24.split(":").map(Number);
+  const period = hours >= 12 ? "PM" : "AM";
+  const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+};
 
 export default function CaloriesScreen() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
@@ -186,7 +194,12 @@ export default function CaloriesScreen() {
       return;
     }
     const id = String(Date.now()) + Math.random().toString(16).slice(2);
-    await addMeal({ id, date: dateKey, name, calories });
+    const now = new Date();
+    const time = `${now.getHours().toString().padStart(2, "0")}:${now
+      .getMinutes()
+      .toString()
+      .padStart(2, "0")}`;
+    await addMeal({ id, date: dateKey, name, calories, time });
     const refreshed = await getMealsByDate(dateKey);
     setLocal({ [dateKey]: refreshed });
     setMealName("");
@@ -325,7 +338,12 @@ export default function CaloriesScreen() {
       ) : (
         <>
           <ThemedView style={{ flex: 1 }} darkColor="transparent">
-            <ThemedText style={styles.mealName}>{item.name}</ThemedText>
+            <ThemedView style={styles.mealNameRow}>
+              <ThemedText style={styles.mealName}>{item.name}</ThemedText>
+              <ThemedText style={styles.mealTime}>
+                {formatTime(item.time || "12:00")}
+              </ThemedText>
+            </ThemedView>
             <ThemedText style={styles.mealCalories}>
               {item.calories} kcal
             </ThemedText>
@@ -870,8 +888,28 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: "rgba(107, 114, 128, 0.05)",
   },
-  mealName: { fontSize: 16, fontWeight: "400" },
-  mealCalories: { marginTop: 2, fontSize: 13, opacity: 0.7 },
+  mealNameRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "baseline",
+    marginBottom: 2,
+    backgroundColor: "transparent",
+  },
+  mealName: {
+    fontSize: 16,
+    fontWeight: "400",
+    flex: 1,
+    marginRight: 8,
+  },
+  mealTime: {
+    fontSize: 12,
+    opacity: 0.6,
+    fontWeight: "300",
+    color: "#6B8E23",
+    backgroundColor: "transparent",
+    borderWidth: 0,
+  },
+  mealCalories: { fontSize: 13, opacity: 0.7 },
   deleteBtn: {
     paddingHorizontal: 14,
     paddingVertical: 8,

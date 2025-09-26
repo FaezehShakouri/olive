@@ -5,8 +5,17 @@ import { getAllMealsGroupedByDate, getTotalsByDate } from "@/lib/db";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AppState, FlatList, StyleSheet } from "react-native";
-type Meal = { id: string; name: string; calories: number };
+
+type Meal = { id: string; name: string; calories: number; time: string };
 type MealsByDate = Record<string, Meal[]>;
+
+// Helper function to format time from 24-hour to 12-hour AM/PM format
+const formatTime = (time24: string): string => {
+  const [hours, minutes] = time24.split(":").map(Number);
+  const period = hours >= 12 ? "PM" : "AM";
+  const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+  return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+};
 
 const STORAGE_KEY = "MEALS_BY_DATE_V1";
 
@@ -76,13 +85,18 @@ export default function DaysScreen() {
 
   const renderMeal = (m: Meal) => (
     <ThemedView key={m.id} style={styles.mealRow}>
-      <ThemedText
-        style={styles.mealName}
-        numberOfLines={2}
-        ellipsizeMode="tail"
-      >
-        {m.name}
-      </ThemedText>
+      <ThemedView style={styles.mealInfo}>
+        <ThemedText
+          style={styles.mealName}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {m.name}
+        </ThemedText>
+        <ThemedText style={styles.mealTime}>
+          {formatTime(m.time || "12:00")}
+        </ThemedText>
+      </ThemedView>
       <ThemedText style={styles.mealCalories}>{m.calories} kcal</ThemedText>
     </ThemedView>
   );
@@ -146,12 +160,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     backgroundColor: "rgba(156, 175, 136, 0.08)",
   },
-  mealName: {
-    fontSize: 15,
-    fontWeight: "400",
+  mealInfo: {
     flex: 1,
     flexShrink: 1,
     marginRight: 8,
+    backgroundColor: "transparent",
+  },
+  mealName: {
+    fontSize: 15,
+    fontWeight: "400",
+    marginBottom: 2,
+  },
+  mealTime: {
+    fontSize: 11,
+    opacity: 0.6,
+    fontWeight: "300",
+    color: "#6B8E23",
+    backgroundColor: "transparent",
+    borderWidth: 0,
   },
   mealCalories: {
     fontSize: 13,
