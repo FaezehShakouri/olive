@@ -1146,6 +1146,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 12,
     marginTop: 20,
+    backgroundColor: "transparent",
   },
   modalCancelBtn: {
     flex: 1,
