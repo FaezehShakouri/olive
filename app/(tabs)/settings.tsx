@@ -9,7 +9,7 @@ import * as FileSystem from "expo-file-system/legacy";
 import React, { useState } from "react";
 import {
   Alert,
-  Platform,
+  ScrollView,
   StyleSheet,
   Switch,
   TouchableOpacity,
@@ -82,55 +82,40 @@ export default function SettingsScreen() {
 
   return (
     <ThemedSafeAreaView style={{ flex: 1 }}>
-      <ThemedView style={styles.card} darkColor="#333333">
-        <ThemedText style={styles.title}>Appearance</ThemedText>
-        <ThemedView style={styles.row} darkColor="#333333">
-          <ThemedText style={{ flex: 1 }}>Dark mode</ThemedText>
-          <Switch
-            value={themeSwitch === "dark"}
-            onValueChange={async (v) => {
-              const next = v ? "dark" : "light"; // force explicit mode
-              setThemeSwitch(next);
-              await setThemeOverride(next);
-            }}
-          />
+      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
+        <ThemedView style={styles.card} darkColor="#333333">
+          <ThemedText style={styles.title}>Appearance</ThemedText>
+          <ThemedView style={styles.row} darkColor="#333333">
+            <ThemedText style={{ flex: 1 }}>Dark mode</ThemedText>
+            <Switch
+              value={themeSwitch === "dark"}
+              onValueChange={async (v) => {
+                const next = v ? "dark" : "light"; // force explicit mode
+                setThemeSwitch(next);
+                await setThemeOverride(next);
+              }}
+            />
+          </ThemedView>
         </ThemedView>
 
-        <ThemedText style={styles.title}>Data Import</ThemedText>
-        <ThemedText style={styles.desc}>
-          Pick a JSON file with one of these formats:
-        </ThemedText>
-        <ThemedText style={styles.code}>
-          {`[
-  { "id": "123", "date": "2025-01-05", "name": "Chicken salad", "calories": 450 },
-  { "date": "2025-01-05", "name": "Apple", "calories": 95 }
-]`}
-        </ThemedText>
-        <ThemedText style={[styles.code, { marginTop: 8 }]}>
-          {`{
-  "2025-01-05": [
-    { "name": "Chicken salad", "calories": 450 },
-    { "name": "Apple", "calories": 95 }
-  ],
-  "2025-01-06": [
-    { "name": "Oatmeal", "calories": 320 }
-  ]
-}`}
-        </ThemedText>
-
-        <TouchableOpacity style={styles.btn} onPress={onImport}>
-          <ThemedText style={styles.btnText}>Import JSON</ThemedText>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.btn, styles.danger]}
-          onPress={onClearAll}
-        >
-          <ThemedText style={styles.btnText}>Delete All Data</ThemedText>
-        </TouchableOpacity>
-
-        {!!status && <ThemedText style={styles.status}>{status}</ThemedText>}
-      </ThemedView>
+        <ThemedView style={styles.card} darkColor="#333333">
+          <ThemedText style={styles.title}>Data</ThemedText>
+          <ThemedView style={{ gap: 8 }} darkColor="#333333">
+            <TouchableOpacity style={styles.btn} onPress={onImport}>
+              <ThemedText style={styles.btnText}>Import from JSON</ThemedText>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.btn, styles.danger]}
+              onPress={onClearAll}
+            >
+              <ThemedText style={styles.btnText}>Delete All Meals</ThemedText>
+            </TouchableOpacity>
+            {!!status && (
+              <ThemedText style={styles.status}>{status}</ThemedText>
+            )}
+          </ThemedView>
+        </ThemedView>
+      </ScrollView>
     </ThemedSafeAreaView>
   );
 }
@@ -142,19 +127,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     gap: 12,
   },
+  section: { marginBottom: 0, paddingBottom: 8 },
+  headerTitle: { fontSize: 22, fontWeight: "800" },
+  headerSubtitle: { marginTop: 2, fontSize: 12 },
   title: { fontSize: 18, fontWeight: "800" },
   row: { flexDirection: "row", alignItems: "center", paddingVertical: 8 },
-  desc: { fontSize: 14 },
-  code: {
-    fontFamily: Platform.select({
-      ios: "Menlo",
-      android: "monospace",
-      default: "monospace",
-    }),
-    fontSize: 12,
-    borderRadius: 8,
-    padding: 10,
-  },
   btn: {
     backgroundColor: "#2563EB",
     borderRadius: 8,
