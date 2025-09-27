@@ -110,6 +110,14 @@ export default function CaloriesScreen() {
   const remainingAnim = React.useRef(new Animated.Value(0)).current;
   const progressAnim = React.useRef(new Animated.Value(0)).current;
 
+  // Swipe indicator animation
+  const swipeIndicatorAnim = React.useRef(new Animated.Value(0)).current;
+  const [isSwiping, setIsSwiping] = useState(false);
+  const [swipeDirection, setSwipeDirection] = useState<"left" | "right" | null>(
+    null
+  );
+  const swipeProgressAnim = React.useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     (async () => {
       const dateKey = formatDateKey(currentDate);
@@ -281,7 +289,33 @@ export default function CaloriesScreen() {
   const onGestureStateChange = (event: any) => {
     const { state, translationX, velocityX } = event.nativeEvent;
 
-    if (state === State.END) {
+    if (state === State.BEGAN) {
+      // Show swipe indicator when gesture starts
+      setIsSwiping(true);
+      setSwipeDirection(null);
+      swipeProgressAnim.setValue(0);
+      Animated.timing(swipeIndicatorAnim, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+    } else if (state === State.END) {
+      // Hide swipe indicator when gesture ends
+      setIsSwiping(false);
+      setSwipeDirection(null);
+
+      Animated.timing(swipeIndicatorAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+
+      Animated.timing(swipeProgressAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
+
       const threshold = 75; // Minimum swipe distance
       const velocityThreshold = 500; // Minimum swipe velocity
 
@@ -425,11 +459,22 @@ export default function CaloriesScreen() {
       <ThemedSafeAreaView style={{ flex: 1 }}>
         <PanGestureHandler
           onHandlerStateChange={onGestureStateChange}
+          onGestureEvent={(event) => {
+            const { translationX } = event.nativeEvent;
+            if (Math.abs(translationX) > 5) {
+              const direction = translationX > 0 ? "right" : "left";
+              setSwipeDirection(direction);
+
+              // Calculate swipe progress (0 to 1)
+              const progress = Math.min(Math.abs(translationX) / 150, 1);
+              swipeProgressAnim.setValue(progress);
+            }
+          }}
           minPointers={1}
           maxPointers={1}
           shouldCancelWhenOutside={false}
-          activeOffsetX={[-30, 30]}
-          failOffsetY={[-10, 10]}
+          activeOffsetX={[-10, 10]}
+          failOffsetY={[-5, 5]}
         >
           <KeyboardAvoidingView
             behavior={Platform.OS === "ios" ? "padding" : "height"}
@@ -467,8 +512,59 @@ export default function CaloriesScreen() {
                   </TouchableOpacity>
                 </ThemedView>
                 <TouchableOpacity onPress={goToday}>
-                  <ThemedText style={styles.todayText}>Today</ThemedText>
+                  <ThemedText style={styles.todayText}>Go to Today</ThemedText>
                 </TouchableOpacity>
+
+                {/* Swipe Indicator */}
+                <Animated.View
+                  style={[
+                    styles.swipeIndicator,
+                    {
+                      opacity: swipeIndicatorAnim,
+                      transform: [
+                        {
+                          scale: swipeIndicatorAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.8, 1],
+                          }),
+                        },
+                        {
+                          translateX: swipeProgressAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange:
+                              swipeDirection === "right"
+                                ? [0, 30]
+                                : swipeDirection === "left"
+                                ? [0, -30]
+                                : [0, 0],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                >
+                  <ThemedText style={styles.swipeIndicatorText}>
+                    {swipeDirection === "right"
+                      ? "⬅️ Previous day"
+                      : swipeDirection === "left"
+                      ? "Next day ➡️"
+                      : "Swipe to change day"}
+                  </ThemedText>
+
+                  {/* Swipe Progress Bar */}
+                  <Animated.View
+                    style={[
+                      styles.swipeProgressBar,
+                      {
+                        transform: [
+                          {
+                            scaleX: swipeProgressAnim,
+                          },
+                        ],
+                      },
+                    ]}
+                  />
+                </Animated.View>
               </ThemedView>
               <TouchableOpacity
                 style={styles.navBtn}
@@ -851,6 +947,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.7,
     color: "#6B8E23",
+  },
+  swipeIndicator: {
+    position: "absolute",
+    top: -8,
+    left: "50%",
+    marginLeft: -60,
+    width: 120,
+    height: 24,
+    backgroundColor: "rgba(107, 142, 35, 0.9)",
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  swipeIndicatorText: {
+    fontSize: 11,
+    fontWeight: "500",
+    color: "#FFFFFF",
+    textAlign: "center",
+  },
+  swipeProgressBar: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    width: 120,
+    height: 3,
+    backgroundColor: "rgba(255, 255, 255, 0.6)",
+    borderRadius: 1.5,
+    transformOrigin: "left center",
   },
 
   calorieCard: {
