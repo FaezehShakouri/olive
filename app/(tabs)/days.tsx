@@ -6,7 +6,13 @@ import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { AppState, FlatList, StyleSheet } from "react-native";
 
-type Meal = { id: string; name: string; calories: number; time: string };
+type Meal = {
+  id: string;
+  name: string;
+  calories: number;
+  time: string;
+  ingredients?: string;
+};
 type MealsByDate = Record<string, Meal[]>;
 
 // Helper function to format time from 24-hour to 12-hour AM/PM format
@@ -124,6 +130,11 @@ export default function DaysScreen() {
         <ThemedText style={styles.mealTime}>
           {formatTime(m.time || "12:00")}
         </ThemedText>
+        {m.ingredients && (
+          <ThemedText style={styles.mealIngredients}>
+            {m.ingredients}
+          </ThemedText>
+        )}
       </ThemedView>
       <ThemedText style={styles.mealCalories}>{m.calories} kcal</ThemedText>
     </ThemedView>
@@ -217,6 +228,15 @@ const styles = StyleSheet.create({
     color: "#6B8E23",
     backgroundColor: "transparent",
     borderWidth: 0,
+  },
+  mealIngredients: {
+    fontSize: 12,
+    color: "#D1D5DB",
+    fontWeight: "400",
+    marginTop: 3,
+    fontStyle: "italic",
+    lineHeight: 14,
+    opacity: 0.7,
   },
   mealCalories: {
     fontSize: 13,

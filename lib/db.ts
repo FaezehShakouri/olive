@@ -1,6 +1,6 @@
 import { openDatabaseAsync } from "expo-sqlite";
 
-export type Meal = { id: string; date: string; name: string; calories: number; time: string };
+export type Meal = { id: string; date: string; name: string; calories: number; time: string; ingredients?: string };
 
 const DB_NAME = "olive.db";
 let dbPromise: ReturnType<typeof openDatabaseAsync> | null = null;
@@ -41,6 +41,16 @@ async function migrate() {
 			v = 2;
 		});
 	}
+
+	if (v < 3) {
+		await db.withTransactionAsync(async () => {
+			await db.execAsync(`
+        ALTER TABLE meals ADD COLUMN ingredients TEXT;
+      `);
+			await db.execAsync("PRAGMA user_version = 3;");
+			v = 3;
+		});
+	}
 }
 
 export async function ensureDb() {
@@ -51,8 +61,8 @@ export async function ensureDb() {
 export async function addMeal(meal: Meal) {
 	const db = await ensureDb();
 	await db.runAsync(
-		"INSERT INTO meals (id, date, name, calories, time, created_at) VALUES (?, ?, ?, ?, ?, ?)",
-		[meal.id, meal.date, meal.name, meal.calories, meal.time, Date.now()]
+		"INSERT INTO meals (id, date, name, calories, time, ingredients, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+		[meal.id, meal.date, meal.name, meal.calories, meal.time, meal.ingredients || null, Date.now()]
 	);
 }
 
@@ -73,7 +83,7 @@ export async function deleteMeal(id: string) {
 export async function getMealsByDate(date: string): Promise<Meal[]> {
 	const db = await ensureDb();
 	return db.getAllAsync<Meal>(
-		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time FROM meals WHERE date = ? ORDER BY time ASC, created_at ASC",
+		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time, ingredients FROM meals WHERE date = ? ORDER BY time ASC, created_at ASC",
 		[date]
 	);
 }
@@ -81,7 +91,7 @@ export async function getMealsByDate(date: string): Promise<Meal[]> {
 export async function getAllMealsGroupedByDate(): Promise<Record<string, Meal[]>> {
 	const db = await ensureDb();
 	const rows = await db.getAllAsync<Meal>(
-		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time FROM meals ORDER BY date DESC, time ASC, created_at ASC"
+		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time, ingredients FROM meals ORDER BY date DESC, time ASC, created_at ASC"
 	);
 	const map: Record<string, Meal[]> = {};
 	for (const r of rows) {
@@ -120,7 +130,7 @@ export async function bulkUpsertMeals(input: unknown): Promise<ImportResult> {
 	// - Record<date, Array<{ id?, name, calories }>>
 	const db = await ensureDb();
 
-	type InItem = Partial<Meal> & { date: string; name: string; calories: number; time?: string };
+	type InItem = Partial<Meal> & { date: string; name: string; calories: number; time?: string; ingredients?: string };
 
 	let items: InItem[] = [];
 	if (Array.isArray(input)) {
@@ -143,6 +153,7 @@ export async function bulkUpsertMeals(input: unknown): Promise<ImportResult> {
 			const name = String(it.name ?? "").trim();
 			const calories = Number(it.calories);
 			const time = String(it.time ?? "12:00").trim();
+			const ingredients = it.ingredients ? String(it.ingredients).trim() : null;
 			if (!isISODate(date) || !name || !Number.isFinite(calories) || calories <= 0) {
 				skipped++;
 				continue;
@@ -150,8 +161,8 @@ export async function bulkUpsertMeals(input: unknown): Promise<ImportResult> {
 			const id = (it.id ? String(it.id) : String(now + Math.random())).replace(/\s+/g, "");
 			// Use UPSERT; treat replaced rows as updates.
 			await db.runAsync(
-				"INSERT INTO meals (id, date, name, calories, time, created_at) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET date=excluded.date, name=excluded.name, calories=excluded.calories, time=excluded.time",
-				[id, date, name, calories, time, now]
+				"INSERT INTO meals (id, date, name, calories, time, ingredients, created_at) VALUES (?, ?, ?, ?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET date=excluded.date, name=excluded.name, calories=excluded.calories, time=excluded.time, ingredients=excluded.ingredients",
+				[id, date, name, calories, time, ingredients, now]
 			);
 			// Heuristic: if client supplied an id, count as updated; else added.
 			if (it.id) updated++; else added++;

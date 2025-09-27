@@ -48,7 +48,13 @@ function addDays(date: Date, days: number) {
   return d;
 }
 
-type Meal = { id: string; name: string; calories: number; time: string };
+type Meal = {
+  id: string;
+  name: string;
+  calories: number;
+  time: string;
+  ingredients?: string;
+};
 type MealsByDate = Record<string, Meal[]>;
 
 // Helper function to format time from 24-hour to 12-hour AM/PM format
@@ -64,6 +70,7 @@ export default function CaloriesScreen() {
   const [mealsByDate, setMealsByDate] = useState<MealsByDate>({});
   const [mealName, setMealName] = useState("");
   const [mealCalories, setMealCalories] = useState("");
+  const [mealIngredients, setMealIngredients] = useState("");
   const [nameSuggestions, setNameSuggestions] = useState<
     { name: string; calories: number }[]
   >([]);
@@ -233,6 +240,7 @@ export default function CaloriesScreen() {
     Keyboard.dismiss();
     const name = mealName.trim();
     const calories = parseFloat(mealCalories);
+    const ingredients = mealIngredients.trim();
     if (!name) {
       Alert.alert("Missing name", "Please enter a meal name.");
       return;
@@ -247,11 +255,12 @@ export default function CaloriesScreen() {
       .getMinutes()
       .toString()
       .padStart(2, "0")}`;
-    await addMeal({ id, date: dateKey, name, calories, time });
+    await addMeal({ id, date: dateKey, name, calories, time, ingredients });
     const refreshed = await getMealsByDate(dateKey);
     setLocal({ [dateKey]: refreshed });
     setMealName("");
     setMealCalories("");
+    setMealIngredients("");
   };
 
   const onDeleteMeal = async (id: string) => {
@@ -418,6 +427,11 @@ export default function CaloriesScreen() {
                 {formatTime(item.time || "12:00")}
               </ThemedText>
             </ThemedView>
+            {item.ingredients && (
+              <ThemedText style={styles.mealIngredients}>
+                {item.ingredients}
+              </ThemedText>
+            )}
             <ThemedText style={styles.mealCalories}>
               {item.calories} kcal
             </ThemedText>
@@ -786,6 +800,7 @@ export default function CaloriesScreen() {
                 setShowAddModal(false);
                 setMealName("");
                 setMealCalories("");
+                setMealIngredients("");
                 setShowSuggestions(false);
                 setShowCalorieInfo(false);
               }}
@@ -800,6 +815,7 @@ export default function CaloriesScreen() {
                     setShowAddModal(false);
                     setMealName("");
                     setMealCalories("");
+                    setMealIngredients("");
                     setShowSuggestions(false);
                     setShowCalorieInfo(false);
                   }}
@@ -892,6 +908,17 @@ export default function CaloriesScreen() {
                           </ThemedView>
                         )}
 
+                        <TextInput
+                          placeholder="Ingredients (optional)"
+                          value={mealIngredients}
+                          onChangeText={setMealIngredients}
+                          style={styles.modalInputWithMargin}
+                          returnKeyType="done"
+                          placeholderTextColor="#6B7280"
+                          multiline={true}
+                          numberOfLines={2}
+                        />
+
                         <ThemedView style={styles.modalButtons}>
                           <TouchableOpacity
                             style={styles.modalCancelBtn}
@@ -899,6 +926,7 @@ export default function CaloriesScreen() {
                               setShowAddModal(false);
                               setMealName("");
                               setMealCalories("");
+                              setMealIngredients("");
                               setShowSuggestions(false);
                               setShowCalorieInfo(false);
                             }}
@@ -1261,6 +1289,15 @@ const styles = StyleSheet.create({
     color: "#6B8E23",
     backgroundColor: "transparent",
     borderWidth: 0,
+  },
+  mealIngredients: {
+    fontSize: 13,
+    color: "#D1D5DB",
+    fontWeight: "400",
+    marginTop: 4,
+    fontStyle: "italic",
+    lineHeight: 16,
+    opacity: 0.8,
   },
   mealCalories: { fontSize: 13, opacity: 0.7 },
   deleteBtn: {
