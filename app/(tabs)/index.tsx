@@ -427,11 +427,6 @@ export default function CaloriesScreen() {
                 {formatTime(item.time || "12:00")}
               </ThemedText>
             </ThemedView>
-            {item.ingredients && (
-              <ThemedText style={styles.mealIngredients}>
-                {item.ingredients}
-              </ThemedText>
-            )}
             <ThemedText style={styles.mealCalories}>
               {item.calories} kcal
             </ThemedText>

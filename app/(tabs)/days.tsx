@@ -4,7 +4,7 @@ import { ThemedView } from "@/components/themed-view";
 import { getAllMealsGroupedByDate, getTotalsByDate } from "@/lib/db";
 import { useFocusEffect } from "@react-navigation/native";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
-import { AppState, FlatList, StyleSheet } from "react-native";
+import { AppState, FlatList, StyleSheet, TouchableOpacity } from "react-native";
 
 type Meal = {
   id: string;
@@ -117,28 +117,56 @@ export default function DaysScreen() {
     return map;
   }, [dateKeys, mealsByDate]);
 
-  const renderMeal = (m: Meal) => (
-    <ThemedView key={m.id} style={styles.mealRow}>
-      <ThemedView style={styles.mealInfo}>
-        <ThemedText
-          style={styles.mealName}
-          numberOfLines={2}
-          ellipsizeMode="tail"
-        >
-          {m.name}
-        </ThemedText>
-        <ThemedText style={styles.mealTime}>
-          {formatTime(m.time || "12:00")}
-        </ThemedText>
-        {m.ingredients && (
-          <ThemedText style={styles.mealIngredients}>
-            {m.ingredients}
+  const [expandedMeals, setExpandedMeals] = useState<Set<string>>(new Set());
+
+  const toggleMealExpansion = (mealId: string) => {
+    setExpandedMeals((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(mealId)) {
+        newSet.delete(mealId);
+      } else {
+        newSet.add(mealId);
+      }
+      return newSet;
+    });
+  };
+
+  const renderMeal = (m: Meal) => {
+    const isExpanded = expandedMeals.has(m.id);
+    const hasIngredients = m.ingredients && m.ingredients.trim().length > 0;
+
+    return (
+      <TouchableOpacity
+        key={m.id}
+        style={[
+          styles.mealRow,
+          hasIngredients && styles.mealRowClickable,
+          isExpanded && styles.mealRowExpanded,
+        ]}
+        onPress={() => hasIngredients && toggleMealExpansion(m.id)}
+        disabled={!hasIngredients}
+      >
+        <ThemedView style={styles.mealInfo}>
+          <ThemedText
+            style={styles.mealName}
+            numberOfLines={2}
+            ellipsizeMode="tail"
+          >
+            {m.name}
           </ThemedText>
-        )}
-      </ThemedView>
-      <ThemedText style={styles.mealCalories}>{m.calories} kcal</ThemedText>
-    </ThemedView>
-  );
+          <ThemedText style={styles.mealTime}>
+            {formatTime(m.time || "12:00")}
+          </ThemedText>
+          {isExpanded && hasIngredients && (
+            <ThemedText style={styles.mealIngredients}>
+              {m.ingredients}
+            </ThemedText>
+          )}
+        </ThemedView>
+        <ThemedText style={styles.mealCalories}>{m.calories} kcal</ThemedText>
+      </TouchableOpacity>
+    );
+  };
 
   const renderItem = ({ item: dateKey }: { item: string }) => {
     const meals = mealsByDate[dateKey] || [];
@@ -209,6 +237,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(107, 142, 35, 0.2)",
   },
+  mealRowClickable: {
+    backgroundColor: "rgba(107, 142, 35, 0.02)",
+    borderColor: "rgba(107, 142, 35, 0.3)",
+  },
+  mealRowExpanded: {
+    backgroundColor: "rgba(107, 142, 35, 0.05)",
+    borderColor: "rgba(107, 142, 35, 0.4)",
+  },
   mealInfo: {
     flex: 1,
     flexShrink: 1,
@@ -218,8 +254,8 @@ const styles = StyleSheet.create({
   mealName: {
     fontSize: 15,
     fontWeight: "400",
-    marginBottom: 2,
     backgroundColor: "transparent",
+    marginBottom: 2,
   },
   mealTime: {
     fontSize: 11,
