@@ -1,3 +1,4 @@
+import * as FileSystem from "expo-file-system/legacy";
 import { openDatabaseAsync } from "expo-sqlite";
 
 export type Meal = { id: string; date: string; name: string; calories: number; time: string; ingredients?: string };
@@ -15,6 +16,15 @@ async function migrate() {
 	await db.execAsync("PRAGMA journal_mode = WAL;");
 	const [{ user_version }] = await db.getAllAsync<{ user_version: number }>("PRAGMA user_version;");
 	let v = user_version ?? 0;
+
+	// Check if ingredients column exists (for cases where migration might have failed)
+	let ingredientsColumnExists = false;
+	try {
+		const columns = await db.getAllAsync<{ name: string }>("PRAGMA table_info(meals);");
+		ingredientsColumnExists = columns.some(col => col.name === 'ingredients');
+	} catch (error) {
+		// Table might not exist yet, that's fine
+	}
 
 	if (v < 1) {
 		await db.withTransactionAsync(async () => {
@@ -42,14 +52,25 @@ async function migrate() {
 		});
 	}
 
-	if (v < 3) {
-		await db.withTransactionAsync(async () => {
-			await db.execAsync(`
-        ALTER TABLE meals ADD COLUMN ingredients TEXT;
-      `);
+	if (v < 3 || !ingredientsColumnExists) {
+		try {
+			await db.withTransactionAsync(async () => {
+				await db.execAsync(`
+          ALTER TABLE meals ADD COLUMN ingredients TEXT;
+        `);
+			});
 			await db.execAsync("PRAGMA user_version = 3;");
 			v = 3;
-		});
+		} catch (error) {
+			// Column might already exist, check if it's a "duplicate column" error
+			if (error instanceof Error && (error.message.includes("duplicate column name") || error.message.includes("duplicate column"))) {
+				// Column already exists, just update version
+				await db.execAsync("PRAGMA user_version = 3;");
+				v = 3;
+			} else {
+				throw error;
+			}
+		}
 	}
 }
 
@@ -120,6 +141,29 @@ function isISODate(s: string) {
 export async function clearAllMeals() {
 	const db = await ensureDb();
 	await db.execAsync("DELETE FROM meals");
+}
+
+export async function resetDatabase() {
+	const db = await getDb();
+	await db.closeAsync();
+	// Delete the database file
+	const { deleteAsync } = await import("expo-file-system");
+	try {
+		await deleteAsync(`${FileSystem.documentDirectory}SQLite/${DB_NAME}`);
+	} catch (error) {
+		// Database file might not exist, that's fine
+	}
+	// Reset the database promise so it gets recreated
+	dbPromise = null;
+	// Run migration on the new database
+	await ensureDb();
+}
+
+export async function debugDatabaseSchema() {
+	const db = await ensureDb();
+	const columns = await db.getAllAsync<{ name: string; type: string }>("PRAGMA table_info(meals);");
+	const version = await db.getAllAsync<{ user_version: number }>("PRAGMA user_version;");
+	return { columns, version: version[0]?.user_version ?? 0 };
 }
 
 export type ImportResult = { added: number; updated: number; skipped: number };
