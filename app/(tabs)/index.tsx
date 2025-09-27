@@ -81,6 +81,7 @@ export default function CaloriesScreen() {
   const [totalsByDate, setTotalsByDate] = useState<Record<string, number>>({});
   const [calorieGoal, setCalorieGoal] = useState<number>(2000);
   const [showCalorieInfo, setShowCalorieInfo] = useState<boolean>(false);
+  const [isEditMode, setIsEditMode] = useState<boolean>(false);
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -291,6 +292,7 @@ export default function CaloriesScreen() {
     const refreshed = await getMealsByDate(dateKey);
     setLocal({ [dateKey]: refreshed });
     setEditingId(null);
+    setIsEditMode(false);
   };
 
   const goToday = () => setCurrentDate(new Date());
@@ -414,7 +416,7 @@ export default function CaloriesScreen() {
               onPress={saveEdit}
               accessibilityLabel="Save"
             >
-              <IconSymbol name="checkmark" size={18} color="#2563EB" />
+              <IconSymbol name="checkmark" size={18} color="#6B8E23" />
             </TouchableOpacity>
           </ThemedView>
         </>
@@ -431,32 +433,36 @@ export default function CaloriesScreen() {
               {formatTime(item.time || "12:00")}
             </ThemedText>
           </ThemedView>
-          <ThemedView
-            style={{
-              flexDirection: "row",
-              alignItems: "center",
-              gap: 8,
-              marginLeft: 8,
-            }}
-            darkColor="transparent"
-          >
-            <TouchableOpacity
-              style={styles.iconBtn}
-              onPress={() => startEdit(item)}
-              accessibilityLabel="Edit meal"
-            >
-              <IconSymbol name="pencil" size={18} color="#2563EB" />
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.iconBtnDanger}
-              onPress={() => confirmDeleteMeal(item.id)}
-              accessibilityLabel="Delete meal"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-              activeOpacity={0.7}
-            >
-              <IconSymbol name="xmark" size={18} color="#EF4444" />
-            </TouchableOpacity>
-          </ThemedView>
+          {isEditMode && (
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <ThemedView
+                style={{
+                  flexDirection: "row",
+                  alignItems: "center",
+                  gap: 8,
+                  marginLeft: 8,
+                }}
+                darkColor="transparent"
+              >
+                <TouchableOpacity
+                  style={styles.iconBtn}
+                  onPress={() => startEdit(item)}
+                  accessibilityLabel="Edit meal"
+                >
+                  <IconSymbol name="pencil" size={18} color="#9CA3AF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.iconBtnDanger}
+                  onPress={() => confirmDeleteMeal(item.id)}
+                  accessibilityLabel="Delete meal"
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  activeOpacity={0.7}
+                >
+                  <IconSymbol name="xmark" size={18} color="#EF4444" />
+                </TouchableOpacity>
+              </ThemedView>
+            </TouchableWithoutFeedback>
+          )}
         </>
       )}
     </ThemedView>
@@ -642,22 +648,36 @@ export default function CaloriesScreen() {
             </ThemedView>
 
             <ThemedView style={{ flex: 1 }}>
-              <FlatList
-                data={todaysMeals}
-                keyExtractor={(item) => item.id}
-                renderItem={renderItem}
-                contentContainerStyle={
-                  todaysMeals.length === 0
-                    ? { flex: 1, justifyContent: "center" }
-                    : { paddingBottom: 20 }
-                }
-                style={{ flex: 1 }}
-                showsVerticalScrollIndicator={true}
-                bounces={true}
-                scrollEnabled={true}
-                keyboardShouldPersistTaps="handled"
-                nestedScrollEnabled={true}
-              />
+              {todaysMeals.length > 0 && (
+                <ThemedView style={styles.editIconContainer}>
+                  <TouchableOpacity
+                    style={styles.editIconBtn}
+                    onPress={() => setIsEditMode(!isEditMode)}
+                  >
+                    <IconSymbol name="pencil" size={16} color="#9CA3AF" />
+                  </TouchableOpacity>
+                </ThemedView>
+              )}
+              <TouchableWithoutFeedback
+                onPress={() => isEditMode && setIsEditMode(false)}
+              >
+                <FlatList
+                  data={todaysMeals}
+                  keyExtractor={(item) => item.id}
+                  renderItem={renderItem}
+                  contentContainerStyle={
+                    todaysMeals.length === 0
+                      ? { flex: 1, justifyContent: "center" }
+                      : { paddingBottom: 20 }
+                  }
+                  style={{ flex: 1 }}
+                  showsVerticalScrollIndicator={true}
+                  bounces={true}
+                  scrollEnabled={true}
+                  keyboardShouldPersistTaps="handled"
+                  nestedScrollEnabled={true}
+                />
+              </TouchableWithoutFeedback>
             </ThemedView>
             <ConfirmDialog
               visible={pendingDeleteId !== null}
@@ -1132,23 +1152,20 @@ const styles = StyleSheet.create({
     color: "#F8FAFC",
   },
   iconBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 9999,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   iconBtnDanger: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-    borderRadius: 9999,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
   },
   iconBtnConfirm: {
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 9999,
+    paddingVertical: 10,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1293,6 +1310,14 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     lineHeight: 16,
     opacity: 0.8,
+  },
+  editIconContainer: {
+    alignItems: "flex-end",
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+  },
+  editIconBtn: {
+    padding: 8,
   },
   mealCalories: { fontSize: 13, opacity: 0.7 },
   deleteBtn: {
