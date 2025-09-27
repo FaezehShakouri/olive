@@ -73,6 +73,7 @@ export default function CaloriesScreen() {
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
   const [totalsByDate, setTotalsByDate] = useState<Record<string, number>>({});
   const [calorieGoal, setCalorieGoal] = useState<number>(2000);
+  const [showCalorieInfo, setShowCalorieInfo] = useState<boolean>(false);
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -786,6 +787,7 @@ export default function CaloriesScreen() {
                 setMealName("");
                 setMealCalories("");
                 setShowSuggestions(false);
+                setShowCalorieInfo(false);
               }}
             >
               <KeyboardAvoidingView
@@ -799,6 +801,7 @@ export default function CaloriesScreen() {
                     setMealName("");
                     setMealCalories("");
                     setShowSuggestions(false);
+                    setShowCalorieInfo(false);
                   }}
                 >
                   <ThemedView style={styles.modalOverlay}>
@@ -815,7 +818,7 @@ export default function CaloriesScreen() {
                             setMealName(t);
                             setShowSuggestions(true);
                           }}
-                          style={styles.modalInput}
+                          style={styles.modalInputWithMargin}
                           returnKeyType="next"
                           placeholderTextColor="#6B7280"
                           autoFocus={true}
@@ -858,15 +861,36 @@ export default function CaloriesScreen() {
                           </ThemedView>
                         )}
 
-                        <TextInput
-                          placeholder="Calories (e.g., 450)"
-                          value={mealCalories}
-                          onChangeText={setMealCalories}
-                          keyboardType="numeric"
-                          style={styles.modalInput}
-                          returnKeyType="done"
-                          placeholderTextColor="#6B7280"
-                        />
+                        <ThemedView style={styles.calorieInputContainer}>
+                          <TextInput
+                            placeholder="Calories (e.g., 450)"
+                            value={mealCalories}
+                            onChangeText={setMealCalories}
+                            keyboardType="numeric"
+                            style={styles.modalInput}
+                            returnKeyType="done"
+                            placeholderTextColor="#6B7280"
+                          />
+                          <TouchableOpacity
+                            style={styles.calorieInfoBtn}
+                            onPress={() => setShowCalorieInfo(!showCalorieInfo)}
+                          >
+                            <ThemedText style={styles.calorieInfoIcon}>
+                              ?
+                            </ThemedText>
+                          </TouchableOpacity>
+                        </ThemedView>
+
+                        {showCalorieInfo && (
+                          <ThemedView style={styles.calorieInfoTooltip}>
+                            <ThemedText style={styles.calorieInfoText}>
+                              💡 Need help counting calories? Ask an AI like
+                              ChatGPT or Google Bard: "How many calories are in
+                              [your meal]?" They can provide accurate estimates
+                              for most foods!
+                            </ThemedText>
+                          </ThemedView>
+                        )}
 
                         <ThemedView style={styles.modalButtons}>
                           <TouchableOpacity
@@ -876,6 +900,7 @@ export default function CaloriesScreen() {
                               setMealName("");
                               setMealCalories("");
                               setShowSuggestions(false);
+                              setShowCalorieInfo(false);
                             }}
                           >
                             <ThemedText style={styles.modalCancelText}>
@@ -1307,10 +1332,58 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
+    marginBottom: 0,
+    backgroundColor: "rgba(156, 175, 136, 0.12)",
+    fontWeight: "400",
+    color: "#F9FAFB",
+    flex: 1,
+  },
+  modalInputWithMargin: {
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.3)",
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
     marginBottom: 16,
     backgroundColor: "rgba(156, 175, 136, 0.12)",
     fontWeight: "400",
     color: "#F9FAFB",
+  },
+  calorieInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    backgroundColor: "transparent",
+  },
+  calorieInfoBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(107, 142, 35, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.3)",
+  },
+  calorieInfoIcon: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#6B8E23",
+  },
+  calorieInfoTooltip: {
+    backgroundColor: "rgba(107, 142, 35, 0.1)",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.2)",
+  },
+  calorieInfoText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#D1D5DB",
+    textAlign: "left",
   },
   modalSuggestions: {
     borderRadius: 12,
