@@ -423,12 +423,12 @@ export default function CaloriesScreen() {
           <ThemedView style={{ flex: 1 }} darkColor="transparent">
             <ThemedView style={styles.mealNameRow}>
               <ThemedText style={styles.mealName}>{item.name}</ThemedText>
-              <ThemedText style={styles.mealTime}>
-                {formatTime(item.time || "12:00")}
+              <ThemedText style={styles.mealCalories}>
+                {item.calories} kcal
               </ThemedText>
             </ThemedView>
-            <ThemedText style={styles.mealCalories}>
-              {item.calories} kcal
+            <ThemedText style={styles.mealTime}>
+              {formatTime(item.time || "12:00")}
             </ThemedText>
           </ThemedView>
           <ThemedView
@@ -1278,7 +1278,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   mealTime: {
-    fontSize: 12,
+    fontSize: 10,
     opacity: 0.6,
     fontWeight: "300",
     color: "#6B8E23",
