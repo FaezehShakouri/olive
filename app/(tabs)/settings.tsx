@@ -88,10 +88,19 @@ export default function SettingsScreen() {
               <ThemedView style={styles.inputContainer}>
                 <TextInput
                   value={calorieGoal}
-                  onChangeText={setCalorieGoalState}
+                  onChangeText={(text) => {
+                    // Only allow digits and empty string
+                    if (text === "" || /^\d+$/.test(text)) {
+                      const num = parseInt(text, 10);
+                      // Check if number exceeds maximum (8 digits max)
+                      if (text === "" || (num > 0 && num <= 99999999)) {
+                        setCalorieGoalState(text);
+                      }
+                    }
+                  }}
                   onBlur={async () => {
                     const goal = parseInt(calorieGoal, 10);
-                    if (goal > 0 && goal <= 10000) {
+                    if (goal > 0 && goal <= 99999999) {
                       await setCalorieGoal(goal);
                     } else {
                       const current = await getCalorieGoal();
@@ -99,6 +108,7 @@ export default function SettingsScreen() {
                     }
                   }}
                   keyboardType="numeric"
+                  maxLength={8}
                   style={styles.goalInput}
                   placeholder="2000"
                   placeholderTextColor="#6B7280"
