@@ -1,14 +1,9 @@
 import { ThemedSafeAreaView } from "@/components/safe-area-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { bulkUpsertMeals, clearAllMeals, ImportResult } from "@/lib/db";
-import {
-  getCalorieGoal,
-  getThemeOverride,
-  setCalorieGoal,
-  setThemeOverride,
-} from "@/lib/theme";
+import { IconSymbol } from "@/components/ui/icon-symbol";
+import { bulkUpsertMeals, ImportResult } from "@/lib/db";
+import { getCalorieGoal, setCalorieGoal } from "@/lib/theme";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
 import React, { useState } from "react";
@@ -16,29 +11,20 @@ import {
   Alert,
   ScrollView,
   StyleSheet,
-  Switch,
   TextInput,
   TouchableOpacity,
 } from "react-native";
 
 export default function SettingsScreen() {
   const [status, setStatus] = useState<string>("");
-  const [themeSwitch, setThemeSwitch] = useState<"light" | "dark" | null>(null);
   const [calorieGoal, setCalorieGoalState] = useState<string>("2000");
-  const systemScheme = useColorScheme();
 
   React.useEffect(() => {
     (async () => {
-      const v = await getThemeOverride();
-      // If no override saved, default to system theme
-      if (v === null)
-        setThemeSwitch(systemScheme === "dark" ? "dark" : "light");
-      else setThemeSwitch(v);
-
       const goal = await getCalorieGoal();
       setCalorieGoalState(String(goal));
     })();
-  }, [systemScheme]);
+  }, []);
 
   const onImport = async () => {
     setStatus("");
@@ -76,78 +62,85 @@ export default function SettingsScreen() {
     }
   };
 
-  const onClearAll = async () => {
-    Alert.alert("Delete all data", "This will remove all meals. Continue?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: async () => {
-          await clearAllMeals();
-          Alert.alert("Cleared", "All meals deleted.");
-        },
-      },
-    ]);
-  };
-
   return (
     <ThemedSafeAreaView style={{ flex: 1 }}>
-      <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
-        <ThemedView style={styles.card}>
-          <ThemedText style={styles.title}>Appearance</ThemedText>
-          <ThemedView style={styles.row}>
-            <ThemedText style={{ flex: 1 }}>Dark mode</ThemedText>
-            <Switch
-              value={themeSwitch === "dark"}
-              onValueChange={async (v) => {
-                const next = v ? "dark" : "light"; // force explicit mode
-                setThemeSwitch(next);
-                await setThemeOverride(next);
-              }}
-              trackColor={{ false: "#8B7355", true: "#6B8E23" }}
-              thumbColor={themeSwitch === "dark" ? "#9CAF88" : "#D4AF37"}
-            />
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Goals Section */}
+        <ThemedView style={styles.section}>
+          <ThemedView style={styles.sectionHeader}>
+            <IconSymbol name="target" size={20} color="#6B8E23" />
+            <ThemedText style={styles.sectionTitle}>Daily Goals</ThemedText>
+          </ThemedView>
+
+          <ThemedView style={styles.card}>
+            <ThemedView style={styles.inputRow}>
+              <ThemedView style={styles.inputLabel}>
+                <ThemedText style={styles.inputLabelText}>
+                  Calorie Goal
+                </ThemedText>
+                <ThemedText style={styles.inputLabelSubtext}>
+                  Set your daily calorie target
+                </ThemedText>
+              </ThemedView>
+              <ThemedView style={styles.inputContainer}>
+                <TextInput
+                  value={calorieGoal}
+                  onChangeText={setCalorieGoalState}
+                  onBlur={async () => {
+                    const goal = parseInt(calorieGoal, 10);
+                    if (goal > 0 && goal <= 10000) {
+                      await setCalorieGoal(goal);
+                    } else {
+                      const current = await getCalorieGoal();
+                      setCalorieGoalState(String(current));
+                    }
+                  }}
+                  keyboardType="numeric"
+                  style={styles.goalInput}
+                  placeholder="2000"
+                  placeholderTextColor="#6B7280"
+                />
+                <ThemedText style={styles.inputUnit}>kcal</ThemedText>
+              </ThemedView>
+            </ThemedView>
           </ThemedView>
         </ThemedView>
 
-        <ThemedView style={styles.card}>
-          <ThemedText style={styles.title}>Goals</ThemedText>
-          <ThemedView style={styles.row}>
-            <ThemedText style={{ flex: 1 }}>Daily calorie goal</ThemedText>
-            <TextInput
-              value={calorieGoal}
-              onChangeText={setCalorieGoalState}
-              onBlur={async () => {
-                const goal = parseInt(calorieGoal, 10);
-                if (goal > 0 && goal <= 10000) {
-                  await setCalorieGoal(goal);
-                } else {
-                  const current = await getCalorieGoal();
-                  setCalorieGoalState(String(current));
-                }
-              }}
-              keyboardType="numeric"
-              style={styles.goalInput}
-              placeholder="2000"
-              placeholderTextColor="#6B7280"
-            />
+        {/* Data Section */}
+        <ThemedView style={styles.section}>
+          <ThemedView style={styles.sectionHeader}>
+            <IconSymbol name="folder" size={20} color="#6B8E23" />
+            <ThemedText style={styles.sectionTitle}>Data Management</ThemedText>
           </ThemedView>
-        </ThemedView>
 
-        <ThemedView style={styles.card}>
-          <ThemedText style={styles.title}>Data</ThemedText>
-          <ThemedView style={{ gap: 8 }}>
-            <TouchableOpacity style={styles.btn} onPress={onImport}>
-              <ThemedText style={styles.btnText}>Import from JSON</ThemedText>
+          <ThemedView style={styles.card}>
+            <TouchableOpacity style={styles.importBtn} onPress={onImport}>
+              <ThemedView style={styles.btnContent}>
+                <IconSymbol
+                  name="arrow.down.circle"
+                  size={24}
+                  color="#FFFFFF"
+                />
+                <ThemedView style={styles.btnTextContainer}>
+                  <ThemedText style={styles.btnText}>
+                    Import from JSON
+                  </ThemedText>
+                  <ThemedText style={styles.btnSubtext}>
+                    Import your meal data from a JSON file
+                  </ThemedText>
+                </ThemedView>
+                <IconSymbol name="chevron.right" size={16} color="#FFFFFF" />
+              </ThemedView>
             </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.btn, styles.danger]}
-              onPress={onClearAll}
-            >
-              <ThemedText style={styles.btnText}>Delete All Meals</ThemedText>
-            </TouchableOpacity>
+
             {!!status && (
-              <ThemedText style={styles.status}>{status}</ThemedText>
+              <ThemedView style={styles.statusContainer}>
+                <IconSymbol name="checkmark.circle" size={16} color="#6B8E23" />
+                <ThemedText style={styles.status}>{status}</ThemedText>
+              </ThemedView>
             )}
           </ThemedView>
         </ThemedView>
@@ -157,38 +150,117 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingTop: 20,
+    paddingBottom: 32,
+  },
+  section: {
+    marginBottom: 32,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 24,
+    marginBottom: 16,
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "500",
+    color: "#F8FAFC",
+  },
   card: {
-    margin: 20,
-    padding: 20,
+    marginHorizontal: 20,
+    marginVertical: 6,
     borderRadius: 16,
-    gap: 16,
+    padding: 16,
+    backgroundColor: "rgba(156, 175, 136, 0.08)",
+  },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     backgroundColor: "transparent",
   },
-  section: { marginBottom: 0, paddingBottom: 12 },
-  headerTitle: { fontSize: 24, fontWeight: "300", letterSpacing: -0.5 },
-  headerSubtitle: { marginTop: 4, fontSize: 13, opacity: 0.7 },
-  title: { fontSize: 16, fontWeight: "500", marginBottom: 8 },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 12 },
-  goalInput: {
-    backgroundColor: "rgba(107, 114, 128, 0.1)",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  inputLabel: {
+    flex: 1,
+    marginRight: 16,
+    backgroundColor: "transparent",
+  },
+  inputLabelText: {
     fontSize: 16,
-    borderWidth: 0,
+    fontWeight: "500",
+    color: "#F8FAFC",
+    marginBottom: 4,
+  },
+  inputLabelSubtext: {
+    fontSize: 14,
+    color: "#9CA3AF",
+  },
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(107, 142, 35, 0.1)",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.2)",
+  },
+  goalInput: {
+    fontSize: 18,
+    fontWeight: "600",
     color: "#F8FAFC",
     minWidth: 80,
     textAlign: "right",
+    borderWidth: 0,
   },
-  btn: {
+  inputUnit: {
+    fontSize: 14,
+    color: "#9CA3AF",
+    marginLeft: 8,
+    fontWeight: "500",
+  },
+  importBtn: {
     backgroundColor: "#6B8E23",
-    borderRadius: 12,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  btnContent: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingVertical: 14,
+    padding: 20,
+    gap: 16,
   },
-  danger: {
-    backgroundColor: "#8B7355",
+  btnTextContainer: {
+    flex: 1,
+    backgroundColor: "transparent",
   },
-  btnText: { color: "#FFFFFF", fontWeight: "400", fontSize: 15 },
-  status: { marginTop: 8, fontSize: 12, opacity: 0.8 },
+  btnText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
+    marginBottom: 4,
+  },
+  btnSubtext: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.8)",
+  },
+  statusContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: "rgba(107, 142, 35, 0.1)",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.2)",
+    gap: 8,
+  },
+  status: {
+    fontSize: 14,
+    color: "#6B8E23",
+    fontWeight: "500",
+    flex: 1,
+  },
 });
