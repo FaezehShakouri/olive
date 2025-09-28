@@ -126,6 +126,7 @@ export default function CaloriesScreen() {
     null
   );
   const swipeProgressAnim = React.useRef(new Animated.Value(0)).current;
+  const hasShownIndicator = React.useRef(false);
 
   useEffect(() => {
     (async () => {
@@ -302,6 +303,8 @@ export default function CaloriesScreen() {
     const { state, translationX, velocityX } = event.nativeEvent;
 
     if (state === State.BEGAN) {
+      // Reset indicator flag for new gesture
+      hasShownIndicator.current = false;
       // Show swipe indicator when gesture starts
       setIsSwiping(true);
       setSwipeDirection(null);
@@ -311,10 +314,21 @@ export default function CaloriesScreen() {
         duration: 200,
         useNativeDriver: true,
       }).start();
+
+      // Auto-hide after 1 second
+      setTimeout(() => {
+        setIsSwiping(false);
+        Animated.timing(swipeIndicatorAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      }, 1000);
     } else if (state === State.END) {
       // Hide swipe indicator when gesture ends
       setIsSwiping(false);
       setSwipeDirection(null);
+      hasShownIndicator.current = true; // Mark that we've shown the indicator
 
       Animated.timing(swipeIndicatorAnim, {
         toValue: 0,
@@ -477,7 +491,7 @@ export default function CaloriesScreen() {
           onHandlerStateChange={onGestureStateChange}
           onGestureEvent={(event) => {
             const { translationX } = event.nativeEvent;
-            if (Math.abs(translationX) > 5) {
+            if (Math.abs(translationX) > 5 && !hasShownIndicator.current) {
               const direction = translationX > 0 ? "right" : "left";
               setSwipeDirection(direction);
 
