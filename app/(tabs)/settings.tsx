@@ -2,10 +2,15 @@ import { ThemedSafeAreaView } from "@/components/safe-area-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { bulkUpsertMeals, ImportResult } from "@/lib/db";
+import {
+  bulkUpsertMeals,
+  getAllMealsGroupedByDate,
+  ImportResult,
+} from "@/lib/db";
 import { getCalorieGoal, setCalorieGoal } from "@/lib/theme";
 import * as DocumentPicker from "expo-document-picker";
 import * as FileSystem from "expo-file-system/legacy";
+import * as Sharing from "expo-sharing";
 import React, { useState } from "react";
 import {
   Alert,
@@ -49,16 +54,111 @@ export default function SettingsScreen() {
       setStatus("Importing...");
       const result: ImportResult = await bulkUpsertMeals(data);
       setStatus(
-        `Imported. Added: ${result.added}, Updated: ${result.updated}, Skipped: ${result.skipped}`
+        `Imported successfully.`
       );
-      Alert.alert(
-        "Import complete",
-        `Added: ${result.added}\nUpdated: ${result.updated}\nSkipped: ${result.skipped}`
-      );
+      // Auto-hide status after 2 seconds
+      setTimeout(() => {
+        setStatus("");
+      }, 2000);
     } catch (e: any) {
       console.warn(e);
       Alert.alert("Import failed", e?.message ?? "Unknown error");
       setStatus("Import failed.");
+    }
+  };
+
+  const onExport = async () => {
+    setStatus("");
+    try {
+      setStatus("Preparing export...");
+      const allMeals = await getAllMealsGroupedByDate();
+
+      // Check if there's any data
+      const hasData =
+        Object.keys(allMeals).length > 0 &&
+        Object.values(allMeals).some((meals) => meals.length > 0);
+
+      let exportData;
+
+      if (hasData) {
+        // Export actual user data
+        const mealsArray = Object.values(allMeals).flat();
+        exportData = mealsArray.map((meal) => ({
+          name: meal.name,
+          calories: meal.calories,
+          time: meal.time || "12:00",
+          ingredients: meal.ingredients || "",
+          date: meal.date,
+        }));
+      } else {
+        // Provide template if no data
+        exportData = [
+          {
+            name: "Example Meal 1",
+            calories: 350,
+            time: "08:00",
+            ingredients: "2 eggs, 1 slice toast, 1 tbsp butter",
+            date: new Date().toISOString().split("T")[0],
+          },
+          {
+            name: "Example Meal 2",
+            calories: 500,
+            time: "13:00",
+            ingredients: "Grilled chicken breast, rice, vegetables",
+            date: new Date().toISOString().split("T")[0],
+          },
+          {
+            name: "Example Meal 3",
+            calories: 300,
+            time: "19:00",
+            ingredients: "Salad with olive oil dressing",
+            date: new Date().toISOString().split("T")[0],
+          },
+        ];
+      }
+
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const fileName = hasData
+        ? `olive-export-${new Date().toISOString().split("T")[0]}.json`
+        : `olive-template.json`;
+
+      // Save to cache directory first
+      const fileUri = `${FileSystem.cacheDirectory}${fileName}`;
+      await FileSystem.writeAsStringAsync(fileUri, jsonString, {
+        encoding: "utf8",
+      });
+
+      // Check if sharing is available
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert(
+          "Sharing not available",
+          "Sharing is not available on this device."
+        );
+        setStatus("Export failed - sharing not available.");
+        return;
+      }
+
+      // Let user choose where to save/share the file
+      setStatus("Choose where to save...");
+      await Sharing.shareAsync(fileUri, {
+        mimeType: "application/json",
+        dialogTitle: hasData ? "Export your meal data" : "Save template file",
+      });
+
+      setStatus(
+        hasData
+          ? "Data exported successfully!"
+          : "Template created successfully!"
+      );
+      // Auto-hide status after 2 seconds
+      setTimeout(() => {
+        setStatus("");
+      }, 2000);
+    } catch (e: any) {
+      console.warn(e);
+      Alert.alert("Export failed", e?.message ?? "Unknown error");
+      setStatus("Export failed.");
     }
   };
 
@@ -140,6 +240,19 @@ export default function SettingsScreen() {
                   </ThemedText>
                   <ThemedText style={styles.btnSubtext}>
                     Import your meal data from a JSON file
+                  </ThemedText>
+                </ThemedView>
+                <IconSymbol name="chevron.right" size={16} color="#FFFFFF" />
+              </ThemedView>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.exportBtn} onPress={onExport}>
+              <ThemedView style={styles.btnContent}>
+                <IconSymbol name="arrow.up.circle" size={24} color="#FFFFFF" />
+                <ThemedView style={styles.btnTextContainer}>
+                  <ThemedText style={styles.btnText}>Export Data</ThemedText>
+                  <ThemedText style={styles.btnSubtext}>
+                    Export your data or get a template
                   </ThemedText>
                 </ThemedView>
                 <IconSymbol name="chevron.right" size={16} color="#FFFFFF" />
@@ -233,6 +346,12 @@ const styles = StyleSheet.create({
   },
   importBtn: {
     backgroundColor: "#6B8E23",
+    borderRadius: 16,
+    overflow: "hidden",
+    marginBottom: 12,
+  },
+  exportBtn: {
+    backgroundColor: "#8B7355",
     borderRadius: 16,
     overflow: "hidden",
   },
