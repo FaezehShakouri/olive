@@ -53,9 +53,7 @@ export default function SettingsScreen() {
       }
       setStatus("Importing...");
       const result: ImportResult = await bulkUpsertMeals(data);
-      setStatus(
-        `Imported successfully.`
-      );
+      setStatus(`Imported successfully.`);
       // Auto-hide status after 2 seconds
       setTimeout(() => {
         setStatus("");
@@ -335,7 +333,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "#F8FAFC",
     minWidth: 80,
-    textAlign: "right",
+    textAlign: "left",
     borderWidth: 0,
   },
   inputUnit: {
