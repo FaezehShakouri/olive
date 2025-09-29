@@ -1418,7 +1418,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   addModalCard: {
-    backgroundColor: "rgba(31, 41, 55, 0.95)",
+    backgroundColor: "#151718",
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     paddingTop: 12,
