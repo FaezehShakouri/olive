@@ -12,12 +12,13 @@ import {
 } from "@/lib/db";
 import { getCalorieGoal, subscribeCalorieGoal } from "@/lib/theme";
 import * as Clipboard from "expo-clipboard";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Animated,
   Easing,
   FlatList,
+  InteractionManager,
   Keyboard,
   KeyboardAvoidingView,
   Modal,
@@ -89,6 +90,18 @@ export default function CaloriesScreen() {
   const [editCalories, setEditCalories] = useState("");
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const mealNameInputRef = useRef<TextInput>(null);
+
+  // Focus the meal name input when modal opens
+  useEffect(() => {
+    if (showAddModal) {
+      InteractionManager.runAfterInteractions(() => {
+        setTimeout(() => {
+          mealNameInputRef.current?.focus();
+        }, 200);
+      });
+    }
+  }, [showAddModal]);
   const dateKey = formatDateKey(currentDate);
   const todaysMeals = useMemo(() => {
     const meals = mealsByDate[dateKey] || [];
@@ -868,6 +881,7 @@ export default function CaloriesScreen() {
                         </ThemedText>
 
                         <TextInput
+                          ref={mealNameInputRef}
                           placeholder="Meal name (e.g., Chicken salad)"
                           value={mealName}
                           onChangeText={(t) => {
@@ -877,7 +891,6 @@ export default function CaloriesScreen() {
                           style={styles.modalInputWithMargin}
                           returnKeyType="next"
                           placeholderTextColor="#6B7280"
-                          autoFocus={true}
                         />
 
                         {showSuggestions && nameSuggestions.length > 0 && (
