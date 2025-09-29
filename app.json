@@ -4,7 +4,7 @@
     "slug": "olive",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/olive-logo.png",
+    "icon": "./assets/images/logo-olive-icon.png",
     "scheme": "olive",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
@@ -15,7 +15,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/olive-logo.png"
+        "foregroundImage": "./assets/images/logo-olive-icon.png"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
@@ -23,7 +23,7 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/olive-logo.png"
+      "favicon": "./assets/images/logo-olive-icon.png"
     },
     "plugins": [
       "expo-router",
