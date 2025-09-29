@@ -11,6 +11,7 @@ import {
   updateMeal,
 } from "@/lib/db";
 import { getCalorieGoal, subscribeCalorieGoal } from "@/lib/theme";
+import * as Clipboard from "expo-clipboard";
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Alert,
@@ -263,6 +264,16 @@ export default function CaloriesScreen() {
     setMealName("");
     setMealCalories("");
     setMealIngredients("");
+  };
+
+  const copyIngredientsToClipboard = async () => {
+    if (mealIngredients.trim()) {
+      try {
+        await Clipboard.setStringAsync(mealIngredients);
+      } catch (error) {
+        Alert.alert("Copy Failed", "Could not copy ingredients to clipboard.");
+      }
+    }
   };
 
   const onDeleteMeal = async (id: string) => {
@@ -937,16 +948,33 @@ export default function CaloriesScreen() {
                           </ThemedView>
                         )}
 
-                        <TextInput
-                          placeholder="Ingredients (optional)"
-                          value={mealIngredients}
-                          onChangeText={setMealIngredients}
-                          style={styles.modalInputWithMargin}
-                          returnKeyType="done"
-                          placeholderTextColor="#6B7280"
-                          multiline={true}
-                          numberOfLines={2}
-                        />
+                        <ThemedView style={styles.ingredientsInputContainer}>
+                          <TextInput
+                            placeholder="Ingredients (optional)"
+                            value={mealIngredients}
+                            onChangeText={setMealIngredients}
+                            style={styles.modalInput}
+                            returnKeyType="done"
+                            placeholderTextColor="#6B7280"
+                            multiline={true}
+                            numberOfLines={2}
+                          />
+                          <TouchableOpacity
+                            style={styles.copyBtn}
+                            onPress={copyIngredientsToClipboard}
+                            disabled={!mealIngredients.trim()}
+                          >
+                            <IconSymbol
+                              name="doc.on.doc"
+                              size={12}
+                              color="#6B8E23"
+                              style={[
+                                !mealIngredients.trim() &&
+                                  styles.copyIconDisabled,
+                              ]}
+                            />
+                          </TouchableOpacity>
+                        </ThemedView>
 
                         <ThemedView style={styles.modalButtons}>
                           <TouchableOpacity
@@ -1426,6 +1454,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     backgroundColor: "transparent",
   },
+  ingredientsInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    backgroundColor: "transparent",
+  },
   calorieInfoBtn: {
     width: 24,
     height: 24,
@@ -1454,6 +1488,34 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 20,
     color: "#D1D5DB",
+    textAlign: "left",
+  },
+  copyBtn: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(107, 142, 35, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginLeft: 8,
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.3)",
+  },
+  copyIconDisabled: {
+    opacity: 0.3,
+  },
+  copyFeedbackTooltip: {
+    backgroundColor: "rgba(34, 197, 94, 0.1)",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: "rgba(34, 197, 94, 0.2)",
+  },
+  copyFeedbackText: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: "#22C55E",
     textAlign: "left",
   },
   modalSuggestions: {
