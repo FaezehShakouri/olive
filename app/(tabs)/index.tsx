@@ -3,7 +3,13 @@ import { ThemedSafeAreaView } from "@/components/safe-area-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { addMeal, deleteMeal, getMealsByDate, updateMeal } from "@/lib/db";
+import {
+  addMeal,
+  deleteMeal,
+  getIngredientSuggestions,
+  getMealsByDate,
+  updateMeal,
+} from "@/lib/db";
 import { getCalorieGoal, subscribeCalorieGoal } from "@/lib/theme";
 import { useFocusEffect } from "@react-navigation/native";
 import * as Clipboard from "expo-clipboard";
@@ -172,9 +178,15 @@ export default function CaloriesScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editCalories, setEditCalories] = useState("");
+  // Ingredient suggestions state
+  const [ingredientSuggestions, setIngredientSuggestions] = useState<
+    { ingredients: string; calories: number }[]
+  >([]);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const ingredientsInputRef = useRef<TextInput>(null);
+  const justSelectedSuggestionRef = useRef<boolean>(false);
 
   // Focus the ingredients input when modal opens
   useEffect(() => {
@@ -186,6 +198,38 @@ export default function CaloriesScreen() {
       });
     }
   }, [showAddModal]);
+
+  // Fetch ingredient suggestions when user types
+  useEffect(() => {
+    // Skip fetching suggestions if we just selected one
+    if (justSelectedSuggestionRef.current) {
+      justSelectedSuggestionRef.current = false;
+      return;
+    }
+
+    const fetchSuggestions = async () => {
+      if (mealIngredients.trim().length >= 2) {
+        try {
+          const suggestions = await getIngredientSuggestions(
+            mealIngredients.trim(),
+            5
+          );
+          setIngredientSuggestions(suggestions);
+          setShowSuggestions(suggestions.length > 0);
+        } catch (error) {
+          console.error("Error fetching ingredient suggestions:", error);
+          setIngredientSuggestions([]);
+          setShowSuggestions(false);
+        }
+      } else {
+        setIngredientSuggestions([]);
+        setShowSuggestions(false);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchSuggestions, 100); // Debounce for 100ms
+    return () => clearTimeout(timeoutId);
+  }, [mealIngredients]);
   const dateKey = formatDateKey(currentDate);
   const todaysMeals = useMemo(() => {
     const meals = mealsByDate[dateKey] || [];
@@ -385,6 +429,17 @@ export default function CaloriesScreen() {
         Alert.alert("Copy Failed", "Could not copy ingredients to clipboard.");
       }
     }
+  };
+
+  const selectSuggestion = (suggestion: {
+    ingredients: string;
+    calories: number;
+  }) => {
+    justSelectedSuggestionRef.current = true;
+    setMealIngredients(suggestion.ingredients);
+    setMealCalories(suggestion.calories.toString());
+    setShowSuggestions(false);
+    setIngredientSuggestions([]);
   };
 
   const onDeleteMeal = async (id: string) => {
@@ -964,6 +1019,9 @@ export default function CaloriesScreen() {
                 setMealCalories("");
                 setMealIngredients("");
                 setShowCalorieInfo(false);
+                setShowSuggestions(false);
+                setIngredientSuggestions([]);
+                justSelectedSuggestionRef.current = false;
               }}
             >
               <KeyboardAvoidingView
@@ -977,6 +1035,8 @@ export default function CaloriesScreen() {
                     setMealCalories("");
                     setMealIngredients("");
                     setShowCalorieInfo(false);
+                    setShowSuggestions(false);
+                    setIngredientSuggestions([]);
                   }}
                 >
                   <ThemedView style={styles.modalOverlay}>
@@ -1014,6 +1074,47 @@ export default function CaloriesScreen() {
                             />
                           </TouchableOpacity>
                         </ThemedView>
+
+                        {/* Ingredient Suggestions */}
+                        {showSuggestions &&
+                          ingredientSuggestions.length > 0 && (
+                            <ThemedView style={styles.modalSuggestions}>
+                              <FlatList
+                                data={ingredientSuggestions}
+                                keyExtractor={(_, index) => index.toString()}
+                                renderItem={({ item: suggestion, index }) => (
+                                  <TouchableOpacity
+                                    key={index}
+                                    style={[
+                                      styles.modalSuggestionItem,
+                                      index ===
+                                        ingredientSuggestions.length - 1 && {
+                                        borderBottomWidth: 0,
+                                      },
+                                    ]}
+                                    onPress={() => selectSuggestion(suggestion)}
+                                    activeOpacity={0.7}
+                                  >
+                                    <ThemedView style={styles.suggestionRow}>
+                                      <ThemedText
+                                        style={styles.suggestionText}
+                                        numberOfLines={2}
+                                      >
+                                        {suggestion.ingredients}
+                                      </ThemedText>
+                                      <ThemedText
+                                        style={styles.suggestionCalories}
+                                      >
+                                        {suggestion.calories} kcal
+                                      </ThemedText>
+                                    </ThemedView>
+                                  </TouchableOpacity>
+                                )}
+                                showsVerticalScrollIndicator={false}
+                                style={styles.suggestionsScrollView}
+                              />
+                            </ThemedView>
+                          )}
 
                         <ThemedView style={styles.calorieInputContainer}>
                           <TextInput
@@ -1054,6 +1155,8 @@ export default function CaloriesScreen() {
                               setMealCalories("");
                               setMealIngredients("");
                               setShowCalorieInfo(false);
+                              setShowSuggestions(false);
+                              setIngredientSuggestions([]);
                             }}
                           >
                             <ThemedText style={styles.modalCancelText}>
@@ -1070,6 +1173,8 @@ export default function CaloriesScreen() {
                               setShowAddModal(false);
                               setMealCalories("");
                               setMealIngredients("");
+                              setShowSuggestions(false);
+                              setIngredientSuggestions([]);
                             }}
                             disabled={!canAdd}
                           >
@@ -1587,35 +1692,52 @@ const styles = StyleSheet.create({
     textAlign: "left",
   },
   modalSuggestions: {
-    borderRadius: 12,
+    borderRadius: 16,
     marginBottom: 16,
-    maxHeight: 160,
-    backgroundColor: "rgba(156, 175, 136, 0.08)",
+    maxHeight: 200,
+    backgroundColor: "rgba(21, 23, 24, 0.95)",
     overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "rgba(107, 142, 35, 0.3)",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   suggestionsScrollView: {
-    maxHeight: 160,
+    maxHeight: 200,
   },
   modalSuggestionItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
     backgroundColor: "transparent",
+    borderBottomWidth: 1,
+    borderBottomColor: "rgba(107, 142, 35, 0.08)",
   },
   suggestionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
+    alignItems: "flex-start",
+    minHeight: 20,
   },
   suggestionText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: "400",
     flex: 1,
+    marginRight: 12,
+    color: "#F1F5F9",
+    lineHeight: 20,
   },
   suggestionCalories: {
-    fontSize: 12,
-    fontWeight: "300",
-    opacity: 0.7,
+    fontSize: 13,
+    fontWeight: "500",
     color: "#6B8E23",
+    backgroundColor: "rgba(107, 142, 35, 0.15)",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    overflow: "hidden",
   },
   modalButtons: {
     flexDirection: "row",
