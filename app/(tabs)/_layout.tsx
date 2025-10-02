@@ -19,23 +19,23 @@ export default function TabLayout() {
           backgroundColor: "#151718", // Dark background matching app theme
           borderTopWidth: 1,
           borderTopColor: "rgba(107, 142, 35, 0.2)", // Subtle olive border
-          height: 65, // Optimized height
-          paddingBottom: 6,
-          paddingTop: 6,
+          height: 55, // Reduced height
+          paddingBottom: 4,
+          paddingTop: 4,
           paddingHorizontal: 16,
         },
         tabBarLabelStyle: {
           fontSize: 11,
           fontWeight: "500",
-          marginTop: 2,
+          marginTop: -4,
           marginBottom: 0,
         },
         tabBarIconStyle: {
-          marginTop: 0,
+          marginTop: -2,
           marginBottom: 0,
         },
         tabBarItemStyle: {
-          paddingVertical: 2,
+          paddingVertical: 0,
           justifyContent: "center",
           alignItems: "center",
           flex: 1,
