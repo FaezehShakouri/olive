@@ -49,6 +49,7 @@ type Meal = {
   calories: number;
   time: string;
   ingredients?: string;
+  created_at?: number;
 };
 type MealsByDate = Record<string, Meal[]>;
 
@@ -58,6 +59,92 @@ const formatTime = (time24: string): string => {
   const period = hours >= 12 ? "PM" : "AM";
   const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
   return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+};
+
+// Helper function to format date and time together
+const formatDateTime = (dateKey: string, time24: string): string => {
+  const today = new Date();
+  const targetDate = new Date(dateKey);
+
+  // Reset time to start of day for accurate comparison
+  today.setHours(0, 0, 0, 0);
+  targetDate.setHours(0, 0, 0, 0);
+
+  const diffTime = today.getTime() - targetDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  const time = formatTime(time24);
+
+  if (diffDays === 0) {
+    return `Today ${time}`;
+  } else if (diffDays === 1) {
+    return `Yesterday ${time}`;
+  } else if (diffDays <= 7) {
+    return `${diffDays} days ago ${time}`;
+  } else {
+    // For dates older than 1 week, show the actual date
+    const formattedDate = targetDate.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+    return `${formattedDate} ${time}`;
+  }
+};
+
+// Helper function to format date for header display
+const formatHeaderDate = (dateKey: string): string => {
+  const today = new Date();
+  const targetDate = new Date(dateKey);
+
+  // Reset time to start of day for accurate comparison
+  today.setHours(0, 0, 0, 0);
+  targetDate.setHours(0, 0, 0, 0);
+
+  const diffTime = targetDate.getTime() - today.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) {
+    return "Today";
+  } else if (diffDays === 1) {
+    return "Tomorrow";
+  } else if (diffDays < 0) {
+    // Past dates
+    const absDiffDays = Math.abs(diffDays);
+    if (absDiffDays === 1) {
+      return "Yesterday";
+    } else if (absDiffDays <= 7) {
+      return `${absDiffDays} days ago`;
+    } else {
+      return targetDate.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+    }
+  } else {
+    // Future dates (after tomorrow)
+    return targetDate.toLocaleDateString("en-US", {
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
+  }
+};
+
+// Helper function to format creation date and time for meal display
+const formatMealCreationTime = (created_at?: number): string => {
+  if (!created_at) {
+    return "Unknown time";
+  }
+
+  const creationDate = new Date(created_at);
+  const time = formatTime(creationDate.toTimeString().slice(0, 5));
+  const date = creationDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+
+  return `${time} • ${date}`;
 };
 
 export default function CaloriesScreen() {
@@ -445,7 +532,7 @@ export default function CaloriesScreen() {
               </ThemedText>
             </ThemedView>
             <ThemedText style={styles.mealTime}>
-              {formatTime(item.time || "12:00")}
+              {formatMealCreationTime(item.created_at)}
             </ThemedText>
           </ThemedView>
           {isEditMode && (
@@ -520,7 +607,9 @@ export default function CaloriesScreen() {
               </TouchableOpacity>
               <ThemedView style={styles.dateBox}>
                 <ThemedView style={styles.dateRow}>
-                  <ThemedText style={styles.dateText}>{dateKey}</ThemedText>
+                  <ThemedText style={styles.dateText}>
+                    {formatHeaderDate(dateKey)}
+                  </ThemedText>
                   <TouchableOpacity
                     onPress={async () => {
                       setCalendarMonth(
@@ -542,9 +631,13 @@ export default function CaloriesScreen() {
                     <IconSymbol name="calendar" size={18} color="#6B8E23" />
                   </TouchableOpacity>
                 </ThemedView>
-                <TouchableOpacity onPress={goToday}>
-                  <ThemedText style={styles.todayText}>Go to Today</ThemedText>
-                </TouchableOpacity>
+                {formatHeaderDate(dateKey) !== "Today" && (
+                  <TouchableOpacity onPress={goToday}>
+                    <ThemedText style={styles.todayText}>
+                      Go to Today
+                    </ThemedText>
+                  </TouchableOpacity>
+                )}
 
                 {/* Swipe Indicator */}
                 <Animated.View

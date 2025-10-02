@@ -1,7 +1,7 @@
 import * as FileSystem from "expo-file-system/legacy";
 import { openDatabaseAsync } from "expo-sqlite";
 
-export type Meal = { id: string; date: string; name: string; calories: number; time: string; ingredients?: string };
+export type Meal = { id: string; date: string; name: string; calories: number; time: string; ingredients?: string; created_at?: number };
 
 const DB_NAME = "olive.db";
 let dbPromise: ReturnType<typeof openDatabaseAsync> | null = null;
@@ -104,7 +104,7 @@ export async function deleteMeal(id: string) {
 export async function getMealsByDate(date: string): Promise<Meal[]> {
 	const db = await ensureDb();
 	return db.getAllAsync<Meal>(
-		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time, ingredients FROM meals WHERE date = ? ORDER BY time ASC, created_at ASC",
+		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time, ingredients, created_at FROM meals WHERE date = ? ORDER BY time ASC, created_at ASC",
 		[date]
 	);
 }
@@ -112,7 +112,7 @@ export async function getMealsByDate(date: string): Promise<Meal[]> {
 export async function getAllMealsGroupedByDate(): Promise<Record<string, Meal[]>> {
 	const db = await ensureDb();
 	const rows = await db.getAllAsync<Meal>(
-		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time, ingredients FROM meals ORDER BY date DESC, time ASC, created_at ASC"
+		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time, ingredients, created_at FROM meals ORDER BY date DESC, time ASC, created_at ASC"
 	);
 	const map: Record<string, Meal[]> = {};
 	for (const r of rows) {
