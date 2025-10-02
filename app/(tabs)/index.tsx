@@ -424,7 +424,8 @@ export default function CaloriesScreen() {
   const copyIngredientsToClipboard = async () => {
     if (mealIngredients.trim()) {
       try {
-        await Clipboard.setStringAsync(mealIngredients);
+        const formattedText = `How many calories in "${mealIngredients.trim()}"?`;
+        await Clipboard.setStringAsync(formattedText);
       } catch (error) {
         Alert.alert("Copy Failed", "Could not copy ingredients to clipboard.");
       }
@@ -1094,6 +1095,7 @@ export default function CaloriesScreen() {
                                     ]}
                                     onPress={() => selectSuggestion(suggestion)}
                                     activeOpacity={0.7}
+                                    delayPressIn={0}
                                   >
                                     <ThemedView style={styles.suggestionRow}>
                                       <ThemedText
@@ -1112,6 +1114,8 @@ export default function CaloriesScreen() {
                                 )}
                                 showsVerticalScrollIndicator={false}
                                 style={styles.suggestionsScrollView}
+                                keyboardShouldPersistTaps="handled"
+                                scrollEnabled={true}
                               />
                             </ThemedView>
                           )}
