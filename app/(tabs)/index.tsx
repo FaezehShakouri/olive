@@ -142,6 +142,7 @@ const formatMealCreationTime = (created_at?: number): string => {
   const date = creationDate.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
+    year: "numeric",
   });
 
   return `${time} • ${date}`;
