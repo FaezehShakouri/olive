@@ -5,8 +5,15 @@ import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
 import { addMeal, deleteMeal, getMealsByDate, updateMeal } from "@/lib/db";
 import { getCalorieGoal, subscribeCalorieGoal } from "@/lib/theme";
+import { useFocusEffect } from "@react-navigation/native";
 import * as Clipboard from "expo-clipboard";
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Alert,
   Animated,
@@ -302,6 +309,22 @@ export default function CaloriesScreen() {
       remainingAnim.removeListener(remainingId);
     };
   }, [dateKey, todaysMeals, totalAnim, remainingAnim, calorieGoal]);
+
+  // Exit edit mode when navigating away from this tab
+  useFocusEffect(
+    useCallback(() => {
+      // When tab gains focus, do nothing (stay in current state)
+      return () => {
+        // When tab loses focus, exit edit mode if active
+        if (isEditMode) {
+          setIsEditMode(false);
+          setEditingId(null);
+          setEditName("");
+          setEditCalories("");
+        }
+      };
+    }, [isEditMode])
+  );
 
   const setLocal = (next: MealsByDate) => {
     setMealsByDate(next);
