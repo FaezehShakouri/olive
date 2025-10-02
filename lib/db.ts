@@ -231,3 +231,18 @@ export async function getNameSuggestions(prefix: string, limit: number = 8): Pro
 	return rows.map(r => ({ name: r.name, calories: r.calories }));
 }
 
+export async function getIngredientSuggestions(prefix: string, limit: number = 8): Promise<{ ingredients: string; calories: number }[]> {
+	const db = await ensureDb();
+	const like = (prefix ?? "").trim().replace(/[%_]/g, "") + "%";
+	const rows = await db.getAllAsync<{ ingredients: string; calories: number }>(
+		`SELECT ingredients, calories
+     FROM meals
+     WHERE ingredients IS NOT NULL AND ingredients LIKE ?
+     GROUP BY ingredients, calories
+     ORDER BY MAX(created_at) DESC, COUNT(*) DESC
+     LIMIT ?`,
+		[like, String(limit)]
+	);
+	return rows.map(r => ({ ingredients: r.ingredients, calories: r.calories }));
+}
+
