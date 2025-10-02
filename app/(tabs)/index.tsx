@@ -167,6 +167,7 @@ export default function CaloriesScreen() {
   const [calorieGoal, setCalorieGoal] = useState<number>(2000);
   const [showCalorieInfo, setShowCalorieInfo] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
+  const [isScrolling, setIsScrolling] = useState<boolean>(false);
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -325,6 +326,15 @@ export default function CaloriesScreen() {
       };
     }, [isEditMode])
   );
+
+  // Handle scroll events to hide/show FAB
+  const handleScrollBegin = () => {
+    setIsScrolling(true);
+  };
+
+  const handleScrollEnd = () => {
+    setIsScrolling(false);
+  };
 
   const setLocal = (next: MealsByDate) => {
     setMealsByDate(next);
@@ -807,6 +817,10 @@ export default function CaloriesScreen() {
                   bounces={true}
                   scrollEnabled={true}
                   keyboardShouldPersistTaps="handled"
+                  onScrollBeginDrag={handleScrollBegin}
+                  onScrollEndDrag={handleScrollEnd}
+                  onMomentumScrollBegin={handleScrollBegin}
+                  onMomentumScrollEnd={handleScrollEnd}
                   nestedScrollEnabled={true}
                 />
               </TouchableWithoutFeedback>
@@ -930,13 +944,15 @@ export default function CaloriesScreen() {
             </Modal>
 
             {/* Floating Action Button */}
-            <TouchableOpacity
-              style={styles.fab}
-              onPress={() => setShowAddModal(true)}
-              activeOpacity={0.8}
-            >
-              <ThemedText style={styles.fabIcon}>+</ThemedText>
-            </TouchableOpacity>
+            {!isEditMode && !isScrolling && (
+              <TouchableOpacity
+                style={styles.fab}
+                onPress={() => setShowAddModal(true)}
+                activeOpacity={0.8}
+              >
+                <ThemedText style={styles.fabIcon}>+</ThemedText>
+              </TouchableOpacity>
+            )}
 
             {/* Add Meal Modal */}
             <Modal
@@ -1427,8 +1443,8 @@ const styles = StyleSheet.create({
   // Floating Action Button
   fab: {
     position: "absolute",
-    bottom: 32,
-    right: 24,
+    bottom: 20, // Position at the very bottom
+    right: 20, // Position at the very right
     width: 56,
     height: 56,
     borderRadius: 16,
@@ -1440,6 +1456,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.6,
     shadowRadius: 8,
+    zIndex: 1000,
   },
   fabIcon: {
     fontSize: 28,
