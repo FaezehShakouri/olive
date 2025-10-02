@@ -3,13 +3,7 @@ import { ThemedSafeAreaView } from "@/components/safe-area-view";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import {
-  addMeal,
-  deleteMeal,
-  getMealsByDate,
-  getNameSuggestions,
-  updateMeal,
-} from "@/lib/db";
+import { addMeal, deleteMeal, getMealsByDate, updateMeal } from "@/lib/db";
 import { getCalorieGoal, subscribeCalorieGoal } from "@/lib/theme";
 import * as Clipboard from "expo-clipboard";
 import React, { useEffect, useMemo, useRef, useState } from "react";
@@ -23,7 +17,6 @@ import {
   KeyboardAvoidingView,
   Modal,
   Platform,
-  ScrollView,
   StyleSheet,
   TextInput,
   TouchableOpacity,
@@ -70,13 +63,8 @@ const formatTime = (time24: string): string => {
 export default function CaloriesScreen() {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [mealsByDate, setMealsByDate] = useState<MealsByDate>({});
-  const [mealName, setMealName] = useState("");
   const [mealCalories, setMealCalories] = useState("");
   const [mealIngredients, setMealIngredients] = useState("");
-  const [nameSuggestions, setNameSuggestions] = useState<
-    { name: string; calories: number }[]
-  >([]);
-  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [showCalendar, setShowCalendar] = useState<boolean>(false);
   const [showAddModal, setShowAddModal] = useState<boolean>(false);
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
@@ -90,14 +78,14 @@ export default function CaloriesScreen() {
   const [editCalories, setEditCalories] = useState("");
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const mealNameInputRef = useRef<TextInput>(null);
+  const ingredientsInputRef = useRef<TextInput>(null);
 
-  // Focus the meal name input when modal opens
+  // Focus the ingredients input when modal opens
   useEffect(() => {
     if (showAddModal) {
       InteractionManager.runAfterInteractions(() => {
         setTimeout(() => {
-          mealNameInputRef.current?.focus();
+          ingredientsInputRef.current?.focus();
         }, 200);
       });
     }
@@ -232,33 +220,16 @@ export default function CaloriesScreen() {
   };
 
   // Fetch name suggestions as the user types
-  useEffect(() => {
-    let cancelled = false;
-    const q = mealName.trim();
-    if (q.length === 0) {
-      setNameSuggestions([]);
-      return;
-    }
-    (async () => {
-      try {
-        const list = await getNameSuggestions(q, 8);
-        if (!cancelled) setNameSuggestions(list);
-      } catch {
-        if (!cancelled) setNameSuggestions([]);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [mealName]);
 
   const onAddMeal = async () => {
     Keyboard.dismiss();
-    const name = mealName.trim();
-    const calories = parseFloat(mealCalories);
     const ingredients = mealIngredients.trim();
-    if (!name) {
-      Alert.alert("Missing name", "Please enter a meal name.");
+    const calories = parseFloat(mealCalories);
+    if (!ingredients) {
+      Alert.alert(
+        "Missing ingredients",
+        "Please enter the ingredients for this meal."
+      );
       return;
     }
     if (!Number.isFinite(calories) || calories <= 0) {
@@ -271,10 +242,16 @@ export default function CaloriesScreen() {
       .getMinutes()
       .toString()
       .padStart(2, "0")}`;
-    await addMeal({ id, date: dateKey, name, calories, time, ingredients });
+    await addMeal({
+      id,
+      date: dateKey,
+      name: ingredients,
+      calories,
+      time,
+      ingredients,
+    });
     const refreshed = await getMealsByDate(dateKey);
     setLocal({ [dateKey]: refreshed });
-    setMealName("");
     setMealCalories("");
     setMealIngredients("");
   };
@@ -506,7 +483,7 @@ export default function CaloriesScreen() {
     </ThemedView>
   );
 
-  const canAdd = mealName.trim().length > 0 && Number(mealCalories) > 0;
+  const canAdd = mealIngredients.trim().length > 0 && Number(mealCalories) > 0;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -851,10 +828,8 @@ export default function CaloriesScreen() {
               animationType="slide"
               onRequestClose={() => {
                 setShowAddModal(false);
-                setMealName("");
                 setMealCalories("");
                 setMealIngredients("");
-                setShowSuggestions(false);
                 setShowCalorieInfo(false);
               }}
             >
@@ -866,10 +841,8 @@ export default function CaloriesScreen() {
                 <TouchableWithoutFeedback
                   onPress={() => {
                     setShowAddModal(false);
-                    setMealName("");
                     setMealCalories("");
                     setMealIngredients("");
-                    setShowSuggestions(false);
                     setShowCalorieInfo(false);
                   }}
                 >
@@ -880,55 +853,34 @@ export default function CaloriesScreen() {
                           Add Meal
                         </ThemedText>
 
-                        <TextInput
-                          ref={mealNameInputRef}
-                          placeholder="Meal name (e.g., Chicken salad)"
-                          value={mealName}
-                          onChangeText={(t) => {
-                            setMealName(t);
-                            setShowSuggestions(true);
-                          }}
-                          style={styles.modalInputWithMargin}
-                          returnKeyType="next"
-                          placeholderTextColor="#6B7280"
-                        />
-
-                        {showSuggestions && nameSuggestions.length > 0 && (
-                          <ThemedView style={styles.modalSuggestions}>
-                            <ScrollView
-                              style={styles.suggestionsScrollView}
-                              showsVerticalScrollIndicator={true}
-                              bounces={false}
-                              keyboardShouldPersistTaps="handled"
-                            >
-                              {nameSuggestions.map((s, index) => (
-                                <TouchableOpacity
-                                  key={`${s.name}-${s.calories}-${index}`}
-                                  style={styles.modalSuggestionItem}
-                                  onPress={() => {
-                                    setMealName(s.name);
-                                    setMealCalories(s.calories.toString());
-                                    setShowSuggestions(false);
-                                  }}
-                                >
-                                  <ThemedView
-                                    style={styles.suggestionRow}
-                                    darkColor="transparent"
-                                  >
-                                    <ThemedText style={styles.suggestionText}>
-                                      {s.name}
-                                    </ThemedText>
-                                    <ThemedText
-                                      style={styles.suggestionCalories}
-                                    >
-                                      {s.calories} kcal
-                                    </ThemedText>
-                                  </ThemedView>
-                                </TouchableOpacity>
-                              ))}
-                            </ScrollView>
-                          </ThemedView>
-                        )}
+                        <ThemedView style={styles.ingredientsInputContainer}>
+                          <TextInput
+                            ref={ingredientsInputRef}
+                            placeholder="Ingredients (e.g., Chicken breast, lettuce, tomatoes, olive oil)"
+                            value={mealIngredients}
+                            onChangeText={setMealIngredients}
+                            style={styles.modalInput}
+                            returnKeyType="next"
+                            placeholderTextColor="#6B7280"
+                            multiline={true}
+                            numberOfLines={3}
+                          />
+                          <TouchableOpacity
+                            style={styles.copyBtn}
+                            onPress={copyIngredientsToClipboard}
+                            disabled={!mealIngredients.trim()}
+                          >
+                            <IconSymbol
+                              name="doc.on.doc"
+                              size={12}
+                              color="#6B8E23"
+                              style={[
+                                !mealIngredients.trim() &&
+                                  styles.copyIconDisabled,
+                              ]}
+                            />
+                          </TouchableOpacity>
+                        </ThemedView>
 
                         <ThemedView style={styles.calorieInputContainer}>
                           <TextInput
@@ -961,43 +913,13 @@ export default function CaloriesScreen() {
                           </ThemedView>
                         )}
 
-                        <ThemedView style={styles.ingredientsInputContainer}>
-                          <TextInput
-                            placeholder="Ingredients (optional)"
-                            value={mealIngredients}
-                            onChangeText={setMealIngredients}
-                            style={styles.modalInput}
-                            returnKeyType="done"
-                            placeholderTextColor="#6B7280"
-                            multiline={true}
-                            numberOfLines={2}
-                          />
-                          <TouchableOpacity
-                            style={styles.copyBtn}
-                            onPress={copyIngredientsToClipboard}
-                            disabled={!mealIngredients.trim()}
-                          >
-                            <IconSymbol
-                              name="doc.on.doc"
-                              size={12}
-                              color="#6B8E23"
-                              style={[
-                                !mealIngredients.trim() &&
-                                  styles.copyIconDisabled,
-                              ]}
-                            />
-                          </TouchableOpacity>
-                        </ThemedView>
-
                         <ThemedView style={styles.modalButtons}>
                           <TouchableOpacity
                             style={styles.modalCancelBtn}
                             onPress={() => {
                               setShowAddModal(false);
-                              setMealName("");
                               setMealCalories("");
                               setMealIngredients("");
-                              setShowSuggestions(false);
                               setShowCalorieInfo(false);
                             }}
                           >
@@ -1013,9 +935,8 @@ export default function CaloriesScreen() {
                             onPress={async () => {
                               await onAddMeal();
                               setShowAddModal(false);
-                              setMealName("");
                               setMealCalories("");
-                              setShowSuggestions(false);
+                              setMealIngredients("");
                             }}
                             disabled={!canAdd}
                           >

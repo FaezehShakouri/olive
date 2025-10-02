@@ -134,6 +134,8 @@ export default function DaysScreen() {
   const renderMeal = (m: Meal) => {
     const isExpanded = expandedMeals.has(m.id);
     const hasIngredients = m.ingredients && m.ingredients.trim().length > 0;
+    const ingredients = m.ingredients?.trim() || "";
+    const isLongIngredients = ingredients.length > 50; // Threshold for showing "Tap to see more"
 
     return (
       <TouchableOpacity
@@ -149,18 +151,16 @@ export default function DaysScreen() {
         <ThemedView style={styles.mealInfo}>
           <ThemedText
             style={styles.mealName}
-            numberOfLines={2}
+            numberOfLines={isExpanded ? undefined : 1}
             ellipsizeMode="tail"
           >
-            {m.name}
+            {isExpanded && hasIngredients ? ingredients : m.name}
           </ThemedText>
           <ThemedText style={styles.mealTime}>
             {formatTime(m.time || "12:00")}
           </ThemedText>
-          {isExpanded && hasIngredients && (
-            <ThemedText style={styles.mealIngredients}>
-              {m.ingredients}
-            </ThemedText>
+          {hasIngredients && isLongIngredients && !isExpanded && (
+            <ThemedText style={styles.tapToSeeMore}>Tap to see more</ThemedText>
           )}
         </ThemedView>
         <ThemedText style={styles.mealCalories}>{m.calories} kcal</ThemedText>
@@ -256,6 +256,7 @@ const styles = StyleSheet.create({
     fontWeight: "400",
     backgroundColor: "transparent",
     marginBottom: 2,
+    lineHeight: 18,
   },
   mealTime: {
     fontSize: 11,
@@ -273,6 +274,14 @@ const styles = StyleSheet.create({
     fontStyle: "italic",
     lineHeight: 14,
     opacity: 0.7,
+  },
+  tapToSeeMore: {
+    fontSize: 10,
+    color: "#6B8E23",
+    fontWeight: "500",
+    marginTop: 2,
+    fontStyle: "italic",
+    opacity: 0.8,
   },
   mealCalories: {
     fontSize: 13,
