@@ -72,6 +72,38 @@ async function migrate() {
 			}
 		}
 	}
+
+	if (v < 4) {
+		try {
+			await db.withTransactionAsync(async () => {
+				// SQLite doesn't support modifying CHECK constraints directly, so we need to recreate the table
+				await db.execAsync(`
+          CREATE TABLE meals_new (
+            id TEXT PRIMARY KEY NOT NULL,
+            date TEXT NOT NULL,
+            name TEXT NOT NULL,
+            calories REAL NOT NULL CHECK (calories != 0),
+            time TEXT DEFAULT '12:00',
+            ingredients TEXT,
+            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+          );
+        `);
+				await db.execAsync(`
+          INSERT INTO meals_new (id, date, name, calories, time, ingredients, created_at)
+          SELECT id, date, name, calories, COALESCE(time, '12:00'), ingredients, created_at FROM meals;
+        `);
+				await db.execAsync(`DROP TABLE meals;`);
+				await db.execAsync(`ALTER TABLE meals_new RENAME TO meals;`);
+			});
+			await db.execAsync("PRAGMA user_version = 4;");
+			v = 4;
+		} catch (error) {
+			console.error("Error updating calories constraint:", error);
+			// If migration fails, just update version to avoid retrying
+			await db.execAsync("PRAGMA user_version = 4;");
+			v = 4;
+		}
+	}
 }
 
 export async function ensureDb() {

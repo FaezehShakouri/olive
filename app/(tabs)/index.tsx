@@ -250,8 +250,19 @@ export default function CaloriesScreen() {
     () =>
       todaysMeals.reduce((sum, m) => {
         const c = Number(m.calories);
-        return sum + (Number.isFinite(c) ? c : 0);
+        return sum + (Number.isFinite(c) && c > 0 ? c : 0);
       }, 0),
+    [todaysMeals]
+  );
+
+  const burnedCalories = useMemo(
+    () =>
+      Math.abs(
+        todaysMeals.reduce((sum, m) => {
+          const c = Number(m.calories);
+          return sum + (Number.isFinite(c) && c < 0 ? c : 0);
+        }, 0)
+      ),
     [todaysMeals]
   );
 
@@ -300,11 +311,20 @@ export default function CaloriesScreen() {
   }, [currentDate]);
 
   useEffect(() => {
-    const target = todaysMeals.reduce(
-      (s, m) => s + (Number.isFinite(+m.calories) ? +m.calories : 0),
+    const consumed = todaysMeals.reduce(
+      (s, m) =>
+        s + (Number.isFinite(+m.calories) && +m.calories > 0 ? +m.calories : 0),
       0
     );
-    const remainingTarget = Math.max(0, calorieGoal - target);
+    const burned = Math.abs(
+      todaysMeals.reduce(
+        (s, m) =>
+          s +
+          (Number.isFinite(+m.calories) && +m.calories < 0 ? +m.calories : 0),
+        0
+      )
+    );
+    const remainingTarget = Math.max(0, calorieGoal - consumed + burned);
 
     totalAnim.stopAnimation();
     totalAnim.setValue(0);
@@ -320,13 +340,13 @@ export default function CaloriesScreen() {
     });
 
     Animated.timing(totalAnim, {
-      toValue: target,
-      duration: Math.min(1200, Math.max(350, target * 2)), // quick but smooth
+      toValue: consumed,
+      duration: Math.min(1200, Math.max(350, consumed * 2)), // quick but smooth
       easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
     }).start(() => {
       totalAnim.removeListener(totalId);
-      setDisplayTotal(target);
+      setDisplayTotal(consumed);
     });
 
     Animated.timing(remainingAnim, {
@@ -340,11 +360,11 @@ export default function CaloriesScreen() {
     });
 
     // Animate progress bar smoothly
-    const progressTarget = Math.min(1.2, target / calorieGoal); // Allow slight overshoot for better visual
+    const progressTarget = Math.min(1.2, consumed / calorieGoal); // Allow slight overshoot for better visual
     progressAnim.stopAnimation();
     Animated.timing(progressAnim, {
       toValue: progressTarget,
-      duration: Math.min(1500, Math.max(600, target * 2.5)), // Slightly longer for smoother feel
+      duration: Math.min(1500, Math.max(600, consumed * 2.5)), // Slightly longer for smoother feel
       easing: Easing.bezier(0.25, 0.1, 0.25, 1), // Custom smooth bezier curve
       useNativeDriver: false,
     }).start();
@@ -397,8 +417,11 @@ export default function CaloriesScreen() {
       );
       return;
     }
-    if (!Number.isFinite(calories) || calories <= 0) {
-      Alert.alert("Invalid calories", "Enter a positive number.");
+    if (!Number.isFinite(calories) || calories === 0) {
+      Alert.alert(
+        "Invalid calories",
+        "Enter a non-zero number (positive for food, negative for burned calories)."
+      );
       return;
     }
     const id = String(Date.now()) + Math.random().toString(16).slice(2);
@@ -463,8 +486,11 @@ export default function CaloriesScreen() {
     if (!editingId) return;
     const n = editName.trim();
     const c = Number(editCalories);
-    if (!n || !Number.isFinite(c) || c <= 0) {
-      Alert.alert("Invalid input", "Enter a valid name and positive calories.");
+    if (!n || !Number.isFinite(c) || c === 0) {
+      Alert.alert(
+        "Invalid input",
+        "Enter a valid name and non-zero calories (positive for food, negative for burned calories)."
+      );
       return;
     }
     await updateMeal(editingId, n, c);
@@ -588,7 +614,7 @@ export default function CaloriesScreen() {
             <TextInput
               value={editCalories}
               onChangeText={setEditCalories}
-              placeholder="Calories"
+              placeholder="Calories (e.g., 450 or -300 for burned)"
               keyboardType="numeric"
               style={styles.input}
               placeholderTextColor="#6B7280"
@@ -660,7 +686,8 @@ export default function CaloriesScreen() {
     </ThemedView>
   );
 
-  const canAdd = mealIngredients.trim().length > 0 && Number(mealCalories) > 0;
+  const canAdd =
+    mealIngredients.trim().length > 0 && Number(mealCalories) !== 0;
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
@@ -804,9 +831,9 @@ export default function CaloriesScreen() {
                 <ThemedView style={styles.statDivider} />
                 <ThemedView style={styles.statItem} darkColor="transparent">
                   <ThemedText style={styles.statValue}>
-                    {calorieGoal}
+                    {burnedCalories}
                   </ThemedText>
-                  <ThemedText style={styles.statLabel}>Daily Goal</ThemedText>
+                  <ThemedText style={styles.statLabel}>Burned</ThemedText>
                 </ThemedView>
               </ThemedView>
               <ThemedView
@@ -1122,7 +1149,7 @@ export default function CaloriesScreen() {
 
                         <ThemedView style={styles.calorieInputContainer}>
                           <TextInput
-                            placeholder="Calories (e.g., 450)"
+                            placeholder="Calories (e.g., 450 or -300 for burned)"
                             value={mealCalories}
                             onChangeText={setMealCalories}
                             keyboardType="numeric"
