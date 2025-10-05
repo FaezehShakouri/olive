@@ -397,7 +397,10 @@ export default function CaloriesScreen() {
   };
 
   const handleScrollEnd = () => {
-    setIsScrolling(false);
+    // Add a small delay to ensure scrolling has actually ended
+    setTimeout(() => {
+      setIsScrolling(false);
+    }, 100);
   };
 
   const setLocal = (next: MealsByDate) => {
@@ -470,6 +473,8 @@ export default function CaloriesScreen() {
     await deleteMeal(id);
     const refreshed = await getMealsByDate(dateKey);
     setLocal({ [dateKey]: refreshed });
+    // Ensure scrolling state is reset after deletion
+    setIsScrolling(false);
   };
 
   const confirmDeleteMeal = (id: string) => {

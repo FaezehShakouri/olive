@@ -223,8 +223,8 @@ export type ImportResult = { added: number; updated: number; skipped: number };
 
 export async function bulkUpsertMeals(input: unknown): Promise<ImportResult> {
 	// Accepts:
-	// - Array<{ id?, date, name, calories }>
-	// - Record<date, Array<{ id?, name, calories }>>
+	// - Array<{ id?, date, name, calories, time?, ingredients? }>
+	// - Record<date, Array<{ id?, name, calories, time?, ingredients? }>>
 	const db = await ensureDb();
 
 	type InItem = Partial<Meal> & { date: string; name: string; calories: number; time?: string; ingredients?: string };
@@ -251,7 +251,8 @@ export async function bulkUpsertMeals(input: unknown): Promise<ImportResult> {
 			const calories = Number(it.calories);
 			const time = String(it.time ?? "12:00").trim();
 			const ingredients = it.ingredients ? String(it.ingredients).trim() : null;
-			if (!isISODate(date) || !name || !Number.isFinite(calories) || calories <= 0) {
+			// Updated validation: allow negative calories (burned calories) but not zero
+			if (!isISODate(date) || !name || !Number.isFinite(calories) || calories === 0) {
 				skipped++;
 				continue;
 			}
@@ -267,6 +268,21 @@ export async function bulkUpsertMeals(input: unknown): Promise<ImportResult> {
 	});
 
 	return { added, updated, skipped };
+}
+
+export async function exportAllMeals(): Promise<Meal[]> {
+	const db = await ensureDb();
+	return db.getAllAsync<Meal>(
+		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time, ingredients, created_at FROM meals ORDER BY date DESC, time ASC, created_at ASC"
+	);
+}
+
+export async function exportMealsByDateRange(startDate: string, endDate: string): Promise<Meal[]> {
+	const db = await ensureDb();
+	return db.getAllAsync<Meal>(
+		"SELECT id, date, name, calories, COALESCE(time, '12:00') as time, ingredients, created_at FROM meals WHERE date >= ? AND date <= ? ORDER BY date DESC, time ASC, created_at ASC",
+		[startDate, endDate]
+	);
 }
 
 export async function getNameSuggestions(prefix: string, limit: number = 8): Promise<{ name: string; calories: number }[]> {
