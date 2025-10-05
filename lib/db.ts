@@ -13,21 +13,28 @@ async function getDb() {
 
 async function migrate() {
 	const db = await getDb();
-	await db.execAsync("PRAGMA journal_mode = WAL;");
-	const [{ user_version }] = await db.getAllAsync<{ user_version: number }>("PRAGMA user_version;");
-	let v = user_version ?? 0;
-
-	// Check if ingredients column exists (for cases where migration might have failed)
-	let ingredientsColumnExists = false;
+	
 	try {
-		const columns = await db.getAllAsync<{ name: string }>("PRAGMA table_info(meals);");
-		ingredientsColumnExists = columns.some(col => col.name === 'ingredients');
-	} catch (error) {
-		// Table might not exist yet, that's fine
-	}
+		await db.execAsync("PRAGMA journal_mode = WAL;");
+		
+		// Get current version first
+		const [{ user_version }] = await db.getAllAsync<{ user_version: number }>("PRAGMA user_version;");
+		let v = user_version ?? 0;
+		
+		console.log(`Current database version: ${v}`);
 
-	if (v < 1) {
-		await db.withTransactionAsync(async () => {
+		// Check if ingredients column exists (for cases where migration might have failed)
+		let ingredientsColumnExists = false;
+		try {
+			const columns = await db.getAllAsync<{ name: string }>("PRAGMA table_info(meals);");
+			ingredientsColumnExists = columns.some(col => col.name === 'ingredients');
+		} catch (error) {
+			// Table might not exist yet, that's fine
+		}
+
+		// Run migrations one by one without nested transactions
+		if (v < 1) {
+			console.log("Running migration to version 1");
 			await db.execAsync(`
         CREATE TABLE IF NOT EXISTS meals (
           id TEXT PRIMARY KEY NOT NULL,
@@ -39,70 +46,84 @@ async function migrate() {
       `);
 			await db.execAsync("PRAGMA user_version = 1;");
 			v = 1;
-		});
-	}
+		}
 
-	if (v < 2) {
-		await db.withTransactionAsync(async () => {
+		if (v < 2) {
+			console.log("Running migration to version 2");
 			await db.execAsync(`
         ALTER TABLE meals ADD COLUMN time TEXT DEFAULT '12:00';
       `);
 			await db.execAsync("PRAGMA user_version = 2;");
 			v = 2;
-		});
-	}
+		}
 
-	if (v < 3 || !ingredientsColumnExists) {
-		try {
-			await db.withTransactionAsync(async () => {
+		if (v < 3 || !ingredientsColumnExists) {
+			console.log("Running migration to version 3");
+			try {
 				await db.execAsync(`
           ALTER TABLE meals ADD COLUMN ingredients TEXT;
         `);
-			});
-			await db.execAsync("PRAGMA user_version = 3;");
-			v = 3;
-		} catch (error) {
-			// Column might already exist, check if it's a "duplicate column" error
-			if (error instanceof Error && (error.message.includes("duplicate column name") || error.message.includes("duplicate column"))) {
-				// Column already exists, just update version
 				await db.execAsync("PRAGMA user_version = 3;");
 				v = 3;
-			} else {
-				throw error;
+			} catch (error) {
+				// Column might already exist, check if it's a "duplicate column" error
+				if (error instanceof Error && (error.message.includes("duplicate column name") || error.message.includes("duplicate column"))) {
+					// Column already exists, just update version
+					await db.execAsync("PRAGMA user_version = 3;");
+					v = 3;
+				} else {
+					console.error("Error in migration 3:", error);
+					throw error;
+				}
 			}
 		}
-	}
 
-	if (v < 4) {
-		try {
-			await db.withTransactionAsync(async () => {
-				// SQLite doesn't support modifying CHECK constraints directly, so we need to recreate the table
-				await db.execAsync(`
-          CREATE TABLE meals_new (
-            id TEXT PRIMARY KEY NOT NULL,
-            date TEXT NOT NULL,
-            name TEXT NOT NULL,
-            calories REAL NOT NULL CHECK (calories != 0),
-            time TEXT DEFAULT '12:00',
-            ingredients TEXT,
-            created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
-          );
-        `);
-				await db.execAsync(`
-          INSERT INTO meals_new (id, date, name, calories, time, ingredients, created_at)
-          SELECT id, date, name, calories, COALESCE(time, '12:00'), ingredients, created_at FROM meals;
-        `);
-				await db.execAsync(`DROP TABLE meals;`);
-				await db.execAsync(`ALTER TABLE meals_new RENAME TO meals;`);
-			});
-			await db.execAsync("PRAGMA user_version = 4;");
-			v = 4;
-		} catch (error) {
-			console.error("Error updating calories constraint:", error);
-			// If migration fails, just update version to avoid retrying
-			await db.execAsync("PRAGMA user_version = 4;");
-			v = 4;
+		if (v < 4) {
+			console.log("Running migration to version 4");
+			try {
+				// Check if the constraint already allows negative values
+				const tableInfo = await db.getAllAsync<{ sql: string }>("SELECT sql FROM sqlite_master WHERE type='table' AND name='meals';");
+				const currentSql = tableInfo[0]?.sql || '';
+				
+				if (currentSql.includes('CHECK (calories != 0)')) {
+					// Constraint already updated, just update version
+					await db.execAsync("PRAGMA user_version = 4;");
+					v = 4;
+				} else {
+					// SQLite doesn't support modifying CHECK constraints directly, so we need to recreate the table
+					await db.execAsync(`
+            CREATE TABLE meals_new (
+              id TEXT PRIMARY KEY NOT NULL,
+              date TEXT NOT NULL,
+              name TEXT NOT NULL,
+              calories REAL NOT NULL CHECK (calories != 0),
+              time TEXT DEFAULT '12:00',
+              ingredients TEXT,
+              created_at INTEGER NOT NULL DEFAULT (strftime('%s','now') * 1000)
+            );
+          `);
+					await db.execAsync(`
+            INSERT INTO meals_new (id, date, name, calories, time, ingredients, created_at)
+            SELECT id, date, name, calories, COALESCE(time, '12:00'), ingredients, created_at FROM meals;
+          `);
+					await db.execAsync(`DROP TABLE meals;`);
+					await db.execAsync(`ALTER TABLE meals_new RENAME TO meals;`);
+					await db.execAsync("PRAGMA user_version = 4;");
+					v = 4;
+				}
+			} catch (error) {
+				console.error("Error in migration 4:", error);
+				// If migration fails, just update version to avoid retrying
+				await db.execAsync("PRAGMA user_version = 4;");
+				v = 4;
+			}
 		}
+		
+		console.log(`Migration completed. Final version: ${v}`);
+	} catch (error) {
+		console.error("Migration failed:", error);
+		// Don't throw the error, just log it and continue
+		// This prevents the app from crashing on startup
 	}
 }
 
