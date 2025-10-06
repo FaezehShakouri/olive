@@ -1090,7 +1090,7 @@ export default function CaloriesScreen() {
                         <ThemedView style={styles.ingredientsInputContainer}>
                           <TextInput
                             ref={ingredientsInputRef}
-                            placeholder="Ingredients (e.g., Chicken breast, lettuce, tomatoes, olive oil)"
+                            placeholder="Food ingredients or activity (e.g., 'Chicken salad' or '30min gym workout')"
                             value={mealIngredients}
                             onChangeText={setMealIngredients}
                             style={styles.modalInput}
