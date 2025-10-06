@@ -174,6 +174,7 @@ export default function CaloriesScreen() {
   const [showCalorieInfo, setShowCalorieInfo] = useState<boolean>(false);
   const [isEditMode, setIsEditMode] = useState<boolean>(false);
   const [isScrolling, setIsScrolling] = useState<boolean>(false);
+  const [sortNewestFirst, setSortNewestFirst] = useState<boolean>(true);
   // Editing state
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
@@ -245,6 +246,14 @@ export default function CaloriesScreen() {
       return b.id.localeCompare(a.id);
     });
   }, [mealsByDate, dateKey]);
+
+  const sortedTodaysMeals = useMemo(() => {
+    if (sortNewestFirst) {
+      return todaysMeals;
+    } else {
+      return [...todaysMeals].reverse();
+    }
+  }, [todaysMeals, sortNewestFirst]);
 
   const totalCalories = useMemo(
     () =>
@@ -888,23 +897,33 @@ export default function CaloriesScreen() {
             <ThemedView style={{ flex: 1 }}>
               {todaysMeals.length > 0 && (
                 <ThemedView style={styles.editIconContainer}>
-                  <TouchableOpacity
-                    style={styles.editIconBtn}
-                    onPress={() => setIsEditMode(!isEditMode)}
-                  >
-                    <IconSymbol name="pencil" size={16} color="#9CA3AF" />
-                  </TouchableOpacity>
+                  <ThemedView style={styles.iconButtonsRow}>
+                    <TouchableOpacity
+                      style={styles.sortIconBtn}
+                      onPress={() => setSortNewestFirst(!sortNewestFirst)}
+                    >
+                      <ThemedText style={styles.sortText}>
+                        {sortNewestFirst ? "↓" : "↑"}
+                      </ThemedText>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.editIconBtn}
+                      onPress={() => setIsEditMode(!isEditMode)}
+                    >
+                      <IconSymbol name="pencil" size={16} color="#9CA3AF" />
+                    </TouchableOpacity>
+                  </ThemedView>
                 </ThemedView>
               )}
               <TouchableWithoutFeedback
                 onPress={() => isEditMode && setIsEditMode(false)}
               >
                 <FlatList
-                  data={todaysMeals}
+                  data={sortedTodaysMeals}
                   keyExtractor={(item) => item.id}
                   renderItem={renderItem}
                   contentContainerStyle={
-                    todaysMeals.length === 0
+                    sortedTodaysMeals.length === 0
                       ? { flex: 1, justifyContent: "center" }
                       : { paddingBottom: 20 }
                   }
@@ -1576,6 +1595,23 @@ const styles = StyleSheet.create({
   },
   editIconBtn: {
     padding: 8,
+  },
+  iconButtonsRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  sortIconBtn: {
+    padding: 8,
+    minWidth: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: -2,
+  },
+  sortText: {
+    fontSize: 18,
+    color: "#9CA3AF",
+    fontWeight: "600",
   },
   mealCalories: { fontSize: 13, opacity: 0.7 },
   deleteBtn: {
