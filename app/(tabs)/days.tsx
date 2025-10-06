@@ -12,6 +12,7 @@ type Meal = {
   calories: number;
   time: string;
   ingredients?: string;
+  created_at?: number;
 };
 type MealsByDate = Record<string, Meal[]>;
 
@@ -21,6 +22,23 @@ const formatTime = (time24: string): string => {
   const period = hours >= 12 ? "PM" : "AM";
   const hours12 = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
   return `${hours12}:${minutes.toString().padStart(2, "0")} ${period}`;
+};
+
+// Helper function to format creation date and time for meal display
+const formatMealCreationTime = (created_at?: number): string => {
+  if (!created_at) {
+    return "Unknown time";
+  }
+
+  const creationDate = new Date(created_at);
+  const time = formatTime(creationDate.toTimeString().slice(0, 5));
+  const date = creationDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  return `${time} • ${date}`;
 };
 
 // Helper function to format date relatively
@@ -157,7 +175,7 @@ export default function DaysScreen() {
             {isExpanded && hasIngredients ? ingredients : m.name}
           </ThemedText>
           <ThemedText style={styles.mealTime}>
-            {formatTime(m.time || "12:00")}
+            {formatMealCreationTime(m.created_at)}
           </ThemedText>
           {hasIngredients && isLongIngredients && !isExpanded && (
             <ThemedText style={styles.tapToSeeMore}>Tap to see more</ThemedText>
@@ -259,7 +277,7 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   mealTime: {
-    fontSize: 11,
+    fontSize: 10,
     opacity: 0.6,
     fontWeight: "300",
     color: "#6B8E23",
