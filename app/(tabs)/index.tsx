@@ -475,6 +475,14 @@ export default function CaloriesScreen() {
     setLocal({ [dateKey]: refreshed });
     // Ensure scrolling state is reset after deletion
     setIsScrolling(false);
+
+    // If no more items, automatically exit edit mode
+    if (refreshed.length === 0) {
+      setIsEditMode(false);
+      setEditingId(null);
+      setEditName("");
+      setEditCalories("");
+    }
   };
 
   const confirmDeleteMeal = (id: string) => {
