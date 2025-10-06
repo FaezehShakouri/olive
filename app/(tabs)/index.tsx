@@ -324,7 +324,7 @@ export default function CaloriesScreen() {
         0
       )
     );
-    const remainingTarget = Math.max(0, calorieGoal - consumed + burned);
+    const remainingTarget = Math.max(0, calorieGoal - consumed);
 
     totalAnim.stopAnimation();
     totalAnim.setValue(0);
